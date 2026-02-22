@@ -110,18 +110,20 @@ describe("bridge events e2e", () => {
       socket.once("error", (error) => reject(error));
     });
 
+    const runningPhase = waitForRuntimePhase(socket, "running");
     await fetch(`${server.baseUrl}/__devsocket/runtime/start`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: "{}",
     });
-    await waitForRuntimePhase(socket, "running");
+    await runningPhase;
 
+    const stoppedPhase = waitForRuntimePhase(socket, "stopped");
     await fetch(`${server.baseUrl}/__devsocket/runtime/stop`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: "{}",
     });
-    await waitForRuntimePhase(socket, "stopped");
+    await stoppedPhase;
   });
 });
