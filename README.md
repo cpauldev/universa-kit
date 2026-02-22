@@ -1,4 +1,4 @@
-# DevSocket
+# DevSocket 🪼
 
 Framework-agnostic bridge for dev overlays with same-origin APIs and runtime control.
 
@@ -6,10 +6,11 @@ DevSocket attaches to host dev servers and exposes a same-origin control plane (
 
 ## Who Should Use This
 
-| You are...                                       | Should you use DevSocket directly? | Why                                                                               |
-| ------------------------------------------------ | ---------------------------------- | --------------------------------------------------------------------------------- |
-| Building a dev overlay for your own tool/SDK     | Yes                                | DevSocket provides adapters, bridge routes, runtime control, and event streaming  |
-| Using a tool that already includes a dev overlay | Usually no                         | Use that tool's integration wrapper/plugin; DevSocket is likely already inside it |
+| You are...                                                  | Should you use DevSocket directly? | Why                                                                                          |
+| ----------------------------------------------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------- |
+| Building a developer tool (overlay/sidebar/control panel)   | Yes                                | DevSocket provides framework adapters, bridge routes, runtime control, and event streaming.  |
+| Building an app with custom internal developer tooling      | Yes                                | Use DevSocket directly to mount same-origin bridge APIs and optional runtime control in dev. |
+| Using a tool that already ships its own overlay integration | No                                 | Use that tool's setup instructions; the tool author already integrates DevSocket for you.    |
 
 ## Table Of Contents
 
