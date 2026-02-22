@@ -11,7 +11,7 @@
   <a href="LICENSE"><img alt="license" src="https://img.shields.io/badge/license-MIT-blue?style=for-the-badge" height="28" style="vertical-align: middle;" /></a>
 </p>
 
-DevSocket is a universal bridge for in-browser dev tools that works with every framework — allowing tools and applications to run on Next.js, Astro, Nuxt, SvelteKit, Remix, and more. It attaches to host dev servers and exposes a same-origin control plane (`/__devsocket/*`) so UIs can read runtime state, stream events, run runtime actions, and proxy runtime APIs consistently across every framework.
+DevSocket is a universal bridge for in-browser development tools that works across frameworks. It attaches to host dev servers and exposes a same-origin control plane (`/__devsocket/*`) so UIs can read runtime state, stream events, run runtime actions, and proxy runtime APIs consistently across Next.js, Angular, Vue, Astro, Nuxt, SvelteKit, TanStack Start, Remix, and more.
 
 ## Who Should Use This
 
@@ -28,44 +28,47 @@ DevSocket is a universal bridge for in-browser dev tools that works with every f
 - [Representative Use Cases](#representative-use-cases)
 - [Install](#install)
 - [Quick Start (Tool Authors)](#quick-start-tool-authors)
+- [Integration Surfaces (How To Choose)](#integration-surfaces-how-to-choose)
 - [Runtime Modes](#runtime-modes)
 - [Architecture](#architecture)
 - [Configuration Reference](#configuration-reference)
 - [Bridge Routes](#bridge-routes)
 - [Bridge Events](#bridge-events)
+- [Client API (`devsocket/client`)](#client-api-devsocketclient)
+- [Documentation Set](#documentation-set)
 - [Framework Adapters](#framework-adapters)
 - [Server Adapters](#server-adapters)
 - [Build-Tool Adapters](#build-tool-adapters)
 - [Next.js Bridge Keys](#nextjs-bridge-keys)
 - [Exports](#exports)
 - [Compatibility](#compatibility)
+- [Documentation Guardrails](#documentation-guardrails)
 - [Packaging](#packaging)
 
 ## Why DevSocket Matters
 
-DevSocket is infrastructure for browser-based developer tools.
+DevSocket is infrastructure for local development tools.
 
-If you build a dev overlay, sidebar, or control panel, you usually have to reimplement the same plumbing for every framework:
+Imagine you’re building or integrating a service that appears next to a localhost app as an overlay, sidebar, or control panel, and you want it to run across frameworks instead of being tied to one (Next.js, Angular, Vue, Astro, Nuxt, SvelteKit, TanStack Start, Remix, and more).
 
-- attaching to each dev server
-- exposing bridge routes
-- managing runtime start/stop/restart
-- handling events and API proxying
+Frameworks, servers, and build tools all expose different hooks, so teams either reimplement the same integration work, support only one stack, or avoid building the product because cross-framework setup is too complex.
 
-DevSocket gives you that plumbing as a shared layer with framework/server/build-tool adapters and a consistent same-origin bridge contract.
+DevSocket solves this with a shared adapter layer and a consistent same-origin bridge contract (`/__devsocket/*`), so you can focus on product behavior and UX while it handles connection and runtime orchestration. The result is a consistent developer experience across supported stacks when users run their dev server.
 
-You build the product features and UI. DevSocket handles the integration and transport layer.
+_DevSocket primarily targets browser-based dev UIs, but the same bridge also works for non-UI local clients such as scripts and CLIs._
 
 ## What It Provides
 
 DevSocket gives you:
 
 - same-origin bridge routes (default prefix: `/__devsocket`)
-- runtime lifecycle control (`start`, `restart`, `stop`) when `command` is configured
+- runtime lifecycle control (`start`, `restart` require `command`; `stop` is idempotent)
 - runtime status state for your UI
 - versioned bridge contract (`protocolVersion: "1"`) on bridge state/health
 - WebSocket event stream (`/__devsocket/events`) with ordered event IDs
 - API proxying from host origin to runtime origin (`/__devsocket/api/*`)
+- proxy fidelity for binary request payloads and multi-value `Set-Cookie` response headers
+- typed browser/Node client helpers via `devsocket/client`
 - framework/server/build-tool adapters so the bridge is attached where dev servers actually run
 
 DevSocket does not include:
@@ -109,7 +112,7 @@ Vite example:
 
 ```ts
 // vite.config.ts
-import { createDevSocketPlugin } from "devsocket";
+import { createDevSocketPlugin } from "devsocket/vite";
 import { defineConfig } from "vite";
 
 export default defineConfig({
@@ -123,6 +126,33 @@ export default defineConfig({
 ```
 
 If your package wraps this integration, your end users typically only install your package and run their usual `dev` command.
+
+## Integration Surfaces (How To Choose)
+
+DevSocket has different adapter surfaces because frameworks, servers, and build tools expose different integration hooks.
+
+Use this decision table first:
+
+| Your host setup                                                                                   | Import path             | Why                                                   |
+| ------------------------------------------------------------------------------------------------- | ----------------------- | ----------------------------------------------------- |
+| Vite-based framework (Vue, SvelteKit, TanStack Start, Remix, React Router, Angular Vite pipeline) | `devsocket/vite`        | Single plugin path for Vite pipelines.                |
+| Next.js                                                                                           | `devsocket/next`        | Next-specific wrapper and rewrite flow.               |
+| Nuxt                                                                                              | `devsocket/nuxt`        | Nuxt module lifecycle integration.                    |
+| Astro                                                                                             | `devsocket/astro`       | Astro integration hooks.                              |
+| Angular CLI (not Vite pipeline)                                                                   | `devsocket/angular/cli` | Proxy-config based bridge integration for `ng serve`. |
+| `Bun.serve` host server                                                                           | `devsocket/bun`         | Bun-native `fetch`/`websocket` handler integration.   |
+| Custom Node HTTP server (Express/connect style middleware)                                        | `devsocket/node`        | Direct middleware + HTTP server bridge attach.        |
+| Fastify server                                                                                    | `devsocket/fastify`     | Fastify lifecycle and request hook integration.       |
+| Hono on Node server                                                                               | `devsocket/hono`        | Hono Node server attachment helper.                   |
+| Direct webpack-dev-server config                                                                  | `devsocket/webpack`     | Build-tool level middleware wiring.                   |
+| Direct Rsbuild config                                                                             | `devsocket/rsbuild`     | Build-tool level middleware wiring.                   |
+| Direct Rspack config                                                                              | `devsocket/rspack`      | Build-tool level middleware wiring.                   |
+
+Runtime note:
+
+- `devsocket/node` refers to a Node-style server interface, not only Node runtime.
+- For `Bun.serve`, use `devsocket/bun`.
+- DevSocket supports Node and Bun runtimes.
 
 ## Runtime Modes
 
@@ -154,6 +184,8 @@ Important behavior:
 
 - `autoStart` defaults to `true`
 - if runtime start is triggered but `command` is missing, start/restart/proxy-to-runtime paths return an error by design
+- runtime control capability flags in bridge state are `false` when `command` is not configured
+- `POST /runtime/stop` remains safe/idempotent even without a configured runtime command
 
 ## Architecture
 
@@ -208,8 +240,10 @@ With default prefix `/__devsocket`:
 Notes:
 
 - `GET /state` may auto-start runtime when `autoStart` is enabled.
+- bridge routes support query strings (for example `GET /__devsocket/state?source=ui`).
 - `POST /runtime/stop` disables auto-start until `start`/`restart` is called again.
-- error responses use a standard envelope: `{ success: false, message, error: { code, message, retryable, details? } }`.
+- bridge-generated error responses use a standard envelope: `{ success: false, message, error: { code, message, retryable, details? } }`.
+- proxied `/api/*` responses preserve upstream status/body/headers and are not envelope-wrapped by default.
 
 ## Bridge Events
 
@@ -232,7 +266,38 @@ WebSocket subprotocol:
 
 Type source: `src/types.ts` (`DevSocketBridgeEvent`).
 
+## Client API (`devsocket/client`)
+
+```ts
+import { createDevSocketClient } from "devsocket/client";
+
+const client = createDevSocketClient({
+  baseUrl: "http://127.0.0.1:3000",
+});
+
+const health = await client.getHealth();
+const state = await client.getState();
+const runtime = await client.startRuntime();
+
+const unsubscribe = client.subscribeEvents((event) => {
+  console.log(event.type, event.eventId);
+});
+
+unsubscribe();
+```
+
+Node WebSocket implementations can be passed with `webSocketFactory` when needed.
+
+## Documentation Set
+
+- `README.md`: product overview, installation, and integration entrypoints.
+- `PROTOCOL.md`: normative bridge contract (routes, events, errors, and versioning).
+- `ARCHITECTURE.md`: internal component boundaries and data flow.
+
 ## Framework Adapters
+
+Use `devsocket/vite` for any Vite-based stack.
+Use `devsocket/angular/cli` for Angular CLI proxy integration.
 
 ### Next.js
 
@@ -262,6 +327,41 @@ export default defineConfig({
 });
 ```
 
+### Angular CLI (Proxy Config)
+
+```ts
+// devsocket.proxy.mjs
+import { createDevSocketAngularCliProxyConfig } from "devsocket/angular/cli";
+import { writeFile } from "node:fs/promises";
+
+const proxyConfig = await createDevSocketAngularCliProxyConfig();
+await writeFile(
+  new URL("./proxy.devsocket.json", import.meta.url),
+  JSON.stringify(proxyConfig, null, 2),
+);
+```
+
+Then start Angular CLI with the generated proxy config:
+
+```bash
+node devsocket.proxy.mjs
+ng serve --proxy-config proxy.devsocket.json
+```
+
+### Vite (recommended for Vite-based frameworks)
+
+```ts
+// vite.config.ts
+import { createDevSocketPlugin } from "devsocket/vite";
+import { defineConfig } from "vite";
+
+export default defineConfig({
+  plugins: [createDevSocketPlugin()],
+});
+```
+
+This single import works for Vite-based stacks such as Vue, Angular (Vite pipeline), SvelteKit, TanStack Start, Remix, and React Router.
+
 ### Nuxt
 
 ```ts
@@ -274,46 +374,33 @@ export default defineNuxtConfig({
 });
 ```
 
-### SvelteKit (Vite)
-
-```ts
-// vite.config.ts
-import { sveltekit } from "@sveltejs/kit/vite";
-import { devSocketSvelteKit } from "devsocket/sveltekit";
-import { defineConfig } from "vite";
-
-export default defineConfig({
-  plugins: [sveltekit(), devSocketSvelteKit()],
-});
-```
-
-### Remix (Vite)
-
-```ts
-// vite.config.ts
-import { devSocketRemix } from "devsocket/remix";
-import { defineConfig } from "vite";
-
-export default defineConfig({
-  plugins: [devSocketRemix()],
-});
-```
-
-### React Router (Vite)
-
-```ts
-// vite.config.ts
-import { devSocketReactRouter } from "devsocket/remix";
-import { defineConfig } from "vite";
-
-export default defineConfig({
-  plugins: [devSocketReactRouter()],
-});
-```
-
-Use either Remix or React Router adapter for your stack, not both in the same config.
-
 ## Server Adapters
+
+### Bun.serve
+
+```ts
+import {
+  attachDevSocketToBunServe,
+  withDevSocketBunServeFetch,
+  withDevSocketBunServeWebSocketHandlers,
+} from "devsocket/bun";
+
+const devsocket = await attachDevSocketToBunServe({
+  command: "node",
+  args: ["./scripts/dev-runtime.js"],
+});
+
+const server = Bun.serve({
+  fetch: withDevSocketBunServeFetch((request) => {
+    return new Response(`app route: ${new URL(request.url).pathname}`);
+  }, devsocket),
+  websocket: withDevSocketBunServeWebSocketHandlers(devsocket),
+});
+
+// Later, on shutdown:
+await devsocket.close();
+server.stop();
+```
 
 ### Node (middleware + HTTP server)
 
@@ -433,20 +520,22 @@ export default withDevSocket(
 Primary package exports from `devsocket`:
 
 - bridge: `createDevSocketBridge`, `startStandaloneDevSocketBridgeServer`, `DevSocketBridge`
-- Vite/unplugin: `createDevSocketPlugin`, `devSocketUnplugin`
-- framework: `withDevSocket`, `devSocketAstro`, `defineDevSocketNuxtModule`, `devSocketSvelteKit`, `devSocketRemix`, `devSocketReactRouter`
-- server/build: `attachDevSocketToNodeServer`, `attachDevSocketToFastify`, `attachDevSocketToHonoNodeServer`, `withDevSocketWebpackDevServer`, `withDevSocketRsbuild`, `withDevSocketRspack`
+- Vite/unplugin: `createDevSocketPlugin` (recommended via `devsocket/vite`), `devSocketUnplugin`
+- framework: `withDevSocket`, `createDevSocketAngularCliProxyConfig`, `startDevSocketAngularCliBridge`, `withDevSocketAngularCliProxyConfig`, `devSocketAstro`, `defineDevSocketNuxtModule`
+- server/build: `attachDevSocketToBunServe`, `withDevSocketBunServeFetch`, `withDevSocketBunServeWebSocketHandlers`, `attachDevSocketToNodeServer`, `attachDevSocketToFastify`, `attachDevSocketToHonoNodeServer`, `withDevSocketWebpackDevServer`, `withDevSocketRsbuild`, `withDevSocketRspack`
 - runtime helper: `RuntimeHelper`
+- typed client API: `createDevSocketClient`, `DevSocketClientError`
 - shared types: runtime state, bridge state, capability, command, and event types
 - protocol constants: `DEVSOCKET_PROTOCOL_VERSION`, `DEVSOCKET_WS_SUBPROTOCOL`
 
 Subpath exports:
 
+- `devsocket/vite` (recommended default for Vite-based stacks)
 - `devsocket/next`
+- `devsocket/angular/cli`
 - `devsocket/astro`
 - `devsocket/nuxt`
-- `devsocket/sveltekit`
-- `devsocket/remix`
+- `devsocket/bun`
 - `devsocket/node`
 - `devsocket/fastify`
 - `devsocket/hono`
@@ -454,6 +543,7 @@ Subpath exports:
 - `devsocket/rsbuild`
 - `devsocket/rspack`
 - `devsocket/internal` (internal helpers, not stable API)
+- `devsocket/client`
 
 ## Compatibility
 
@@ -465,6 +555,14 @@ Subpath exports:
   - adapter integration tests
   - e2e runtime control tests
   - e2e bridge event flow tests
+
+## Documentation Guardrails
+
+- `bun run docs:lint` validates markdown docs.
+- `bun run docs:check` enforces docs synchronization for protocol/API-impacting source changes.
+- Required docs updates for impacted changes:
+  - `README.md`
+  - `PROTOCOL.md`
 
 ## Packaging
 

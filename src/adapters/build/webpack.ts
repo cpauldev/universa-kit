@@ -1,28 +1,27 @@
-import type {
-  BridgeLifecycle,
-  DevSocketAdapterOptions,
-} from "../shared/adapter-utils.js";
+import type { BridgeLifecycle, DevSocketAdapterOptions } from "../shared/adapter-utils.js";
 import {
-  createSetupMiddlewaresBridgeLifecycle,
-  withDevSocketSetupMiddlewares,
-  type SetupMiddlewaresApp,
-  type SetupMiddlewaresConfig,
-  type SetupMiddlewaresDevServerLike,
-  type SetupMiddlewaresHttpServer,
+  createBuildToolBridgeLifecycle,
+  withDevSocketBuildTool,
+  type BuildToolConfig,
+  type BuildToolDevServerLike,
+} from "./create-build-adapter.js";
+import type {
+  SetupMiddlewaresApp,
+  SetupMiddlewaresHttpServer,
 } from "./middleware-dev-server.js";
 
 export type WebpackLikeApp = SetupMiddlewaresApp;
 export type WebpackLikeHttpServer = SetupMiddlewaresHttpServer;
-export type WebpackDevServerLike = SetupMiddlewaresDevServerLike;
+export type WebpackDevServerLike = BuildToolDevServerLike;
 export type WebpackDevServerConfig<TMiddlewares extends unknown[] = unknown[]> =
-  SetupMiddlewaresConfig<TMiddlewares, WebpackDevServerLike>;
+  BuildToolConfig<TMiddlewares>;
 
 export type WebpackDevSocketOptions = DevSocketAdapterOptions;
 
 export function createWebpackBridgeLifecycle(
   options: WebpackDevSocketOptions = {},
 ): BridgeLifecycle {
-  return createSetupMiddlewaresBridgeLifecycle(options);
+  return createBuildToolBridgeLifecycle(options);
 }
 
 export function withDevSocketWebpackDevServer<
@@ -32,9 +31,8 @@ export function withDevSocketWebpackDevServer<
   config: TConfig,
   options: WebpackDevSocketOptions = {},
 ): TConfig & WebpackDevServerConfig<TMiddlewares> {
-  return withDevSocketSetupMiddlewares<
-    TMiddlewares,
-    WebpackDevServerLike,
-    TConfig
-  >(config, options);
+  return withDevSocketBuildTool<TMiddlewares, WebpackDevServerLike, TConfig>(
+    config,
+    options,
+  );
 }

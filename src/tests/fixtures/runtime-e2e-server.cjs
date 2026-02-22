@@ -23,23 +23,48 @@ function readBody(req) {
   });
 }
 
+function readBodyBuffer(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    req.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+    req.on("end", () => resolve(Buffer.concat(chunks)));
+    req.on("error", reject);
+  });
+}
+
 const server = http.createServer(async (req, res) => {
   const method = req.method || "GET";
-  const url = req.url || "/";
+  const parsedUrl = new URL(req.url || "/", "http://127.0.0.1");
+  const pathname = parsedUrl.pathname;
 
-  if (method === "GET" && url === "/api/version") {
+  if (method === "GET" && pathname === "/api/version") {
     writeJson(res, 200, { ok: true, runtime: "e2e" });
     return;
   }
 
-  if (method === "GET" && url === "/api/pid") {
+  if (method === "GET" && pathname === "/api/pid") {
     writeJson(res, 200, { pid: process.pid });
     return;
   }
 
-  if (method === "POST" && url === "/api/echo") {
+  if (method === "POST" && pathname === "/api/echo") {
     const body = await readBody(req);
     writeJson(res, 200, { method, body });
+    return;
+  }
+
+  if (method === "POST" && pathname === "/api/echo-binary") {
+    const body = await readBodyBuffer(req);
+    writeJson(res, 200, { bodyHex: body.toString("hex") });
+    return;
+  }
+
+  if (method === "GET" && pathname === "/api/cookies") {
+    res.setHeader("Set-Cookie", [
+      "session=abc; Path=/; HttpOnly",
+      "theme=dark; Path=/",
+    ]);
+    writeJson(res, 200, { ok: true });
     return;
   }
 

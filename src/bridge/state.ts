@@ -10,13 +10,15 @@ import {
 
 export function createCapabilities(
   fallbackCommand: string,
+  hasRuntimeControl: boolean,
+  commandHost: DevSocketBridgeCapabilities["commandHost"],
 ): DevSocketBridgeCapabilities {
   return {
-    commandHost: "hybrid",
-    hasRuntimeControl: true,
-    canStartRuntime: true,
-    canRestartRuntime: true,
-    canStopRuntime: true,
+    commandHost,
+    hasRuntimeControl,
+    canStartRuntime: hasRuntimeControl,
+    canRestartRuntime: hasRuntimeControl,
+    canStopRuntime: hasRuntimeControl,
     fallbackCommand,
     wsSubprotocol: DEVSOCKET_WS_SUBPROTOCOL,
     supportedProtocolVersions: [DEVSOCKET_PROTOCOL_VERSION],

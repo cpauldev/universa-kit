@@ -38,15 +38,86 @@ afterEach(async () => {
 });
 
 describe("DevSocketBridge", () => {
-  it("exposes runtime control capabilities", () => {
+  it("reports runtime control as unavailable when command is not configured", () => {
     const bridge = new DevSocketBridge({ autoStart: false });
     bridges.push(bridge);
 
     const state = bridge.getState();
-    expect(state.capabilities.hasRuntimeControl).toBe(true);
-    expect(state.capabilities.commandHost).toBe("hybrid");
+    expect(state.capabilities.hasRuntimeControl).toBe(false);
+    expect(state.capabilities.commandHost).toBe("host");
+    expect(state.capabilities.canStartRuntime).toBe(false);
+    expect(state.capabilities.canRestartRuntime).toBe(false);
+    expect(state.capabilities.canStopRuntime).toBe(false);
     expect(state.runtime.phase).toBe("stopped");
     expect(state.transportState).toBe("bridge_detecting");
+  });
+
+  it("reports runtime control as available when command is configured", () => {
+    const bridge = new DevSocketBridge({
+      autoStart: false,
+      command: process.execPath,
+      args: ["-e", "setTimeout(() => process.exit(0), 1000)"],
+    });
+    bridges.push(bridge);
+
+    const state = bridge.getState();
+    expect(state.capabilities.hasRuntimeControl).toBe(true);
+    expect(state.capabilities.commandHost).toBe("helper");
+    expect(state.capabilities.canStartRuntime).toBe(true);
+    expect(state.capabilities.canRestartRuntime).toBe(true);
+    expect(state.capabilities.canStopRuntime).toBe(true);
+  });
+
+  it("returns a deterministic error for runtime start without command", async () => {
+    const server = await startStandaloneDevSocketBridgeServer({
+      autoStart: false,
+    });
+    standaloneServers.push(server);
+
+    const response = await fetch(
+      `${server.baseUrl}/__devsocket/runtime/start`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: "{}",
+      },
+    );
+    expect(response.status).toBe(503);
+    const payload = (await response.json()) as {
+      success: false;
+      error: {
+        code: string;
+        details?: {
+          reason?: string;
+          fallbackCommand?: string;
+        };
+      };
+    };
+    expect(payload.success).toBe(false);
+    expect(payload.error.code).toBe("runtime_start_failed");
+    expect(payload.error.details?.reason).toBe("missing_command");
+  });
+
+  it("requires POST for runtime control routes", async () => {
+    const server = await startStandaloneDevSocketBridgeServer({
+      autoStart: false,
+      command: process.execPath,
+      args: ["-e", "setTimeout(() => process.exit(0), 1000)"],
+    });
+    standaloneServers.push(server);
+
+    const response = await fetch(`${server.baseUrl}/__devsocket/runtime/start`);
+    expect(response.status).toBe(404);
+    const payload = (await response.json()) as {
+      success: false;
+      error: {
+        code: string;
+      };
+    };
+    expect(payload.success).toBe(false);
+    expect(payload.error.code).toBe("route_not_found");
   });
 
   it("disables auto-start after explicit stop", async () => {
@@ -95,6 +166,20 @@ describe("DevSocketBridge", () => {
     expect(elapsedMs).toBeLessThan(150);
   });
 
+  it("accepts state route requests with query strings", async () => {
+    const server = await startStandaloneDevSocketBridgeServer({
+      autoStart: false,
+    });
+    standaloneServers.push(server);
+
+    const state = await requestJson<{
+      protocolVersion: string;
+      runtime: { phase: string };
+    }>(server.baseUrl, "/__devsocket/state?source=test");
+    expect(state.protocolVersion).toBe("1");
+    expect(state.runtime.phase).toBe("stopped");
+  });
+
   it("returns 426 response for unsupported websocket subprotocol", () => {
     const bridge = new DevSocketBridge({ autoStart: false });
     bridges.push(bridge);
@@ -129,6 +214,7 @@ describe("DevSocketBridge", () => {
     const payload = responseText.split("\r\n\r\n")[1];
     const parsed = JSON.parse(payload) as {
       success: boolean;
+      message: string;
       error: {
         code: string;
         details?: {
@@ -137,6 +223,7 @@ describe("DevSocketBridge", () => {
       };
     };
     expect(parsed.success).toBe(false);
+    expect(parsed.message).toContain("Unsupported WebSocket subprotocol");
     expect(parsed.error.code).toBe("invalid_request");
     expect(parsed.error.details?.wsSubprotocol).toBe(DEVSOCKET_WS_SUBPROTOCOL);
     expect(destroyed).toBe(false);

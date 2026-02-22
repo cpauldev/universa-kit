@@ -1,13 +1,12 @@
 import { afterEach, describe, expect, it } from "bun:test";
 
+import {
+  createDevSocketAngularCliProxyConfig,
+  withDevSocketAngularCliProxyConfig,
+} from "../adapters/framework/angular-cli.js";
 import { devSocketAstro } from "../adapters/framework/astro.js";
 import { withDevSocket } from "../adapters/framework/next.js";
 import { defineDevSocketNuxtModule } from "../adapters/framework/nuxt.js";
-import {
-  devSocketReactRouter,
-  devSocketRemix,
-} from "../adapters/framework/remix.js";
-import { devSocketSvelteKit } from "../adapters/framework/sveltekit.js";
 import { DEVSOCKET_NEXT_BRIDGE_GLOBAL_KEY } from "../adapters/shared/adapter-utils.js";
 import { createDevSocketPlugin } from "../adapters/shared/plugin.js";
 import { createMiddlewareAdapterServerFixture } from "./utils/adapter-server-fixtures.js";
@@ -186,6 +185,61 @@ describe("devsocket adapters", () => {
     await (integration.hooks["astro:server:done"] as () => Promise<void>)();
   });
 
+  it("createDevSocketAngularCliProxyConfig returns proxy rules for bridge routes", async () => {
+    const testBridgeKey = `${DEVSOCKET_NEXT_BRIDGE_GLOBAL_KEY}:angular-cli:test`;
+    const bridgeGlobal = globalThis as typeof globalThis & {
+      [key: string]: unknown;
+    };
+
+    bridgeGlobal[testBridgeKey] = Promise.resolve({
+      baseUrl: "http://127.0.0.1:43210",
+      bridge: {} as never,
+      close: async () => undefined,
+    });
+
+    const proxyConfig = await createDevSocketAngularCliProxyConfig({
+      angularCliBridgeGlobalKey: testBridgeKey,
+    });
+    expect(proxyConfig).toEqual({
+      "/__devsocket": {
+        target: "http://127.0.0.1:43210",
+        secure: false,
+        changeOrigin: false,
+        ws: true,
+        logLevel: "warn",
+      },
+      "/__devsocket/**": {
+        target: "http://127.0.0.1:43210",
+        secure: false,
+        changeOrigin: false,
+        ws: true,
+        logLevel: "warn",
+      },
+    });
+
+    const mergedProxyConfig = await withDevSocketAngularCliProxyConfig(
+      {
+        "/api": {
+          target: "http://127.0.0.1:5000",
+          secure: false,
+          changeOrigin: false,
+          ws: true,
+          logLevel: "warn",
+        },
+      },
+      {
+        angularCliBridgeGlobalKey: testBridgeKey,
+      },
+    );
+    expect(Object.keys(mergedProxyConfig)).toEqual([
+      "/api",
+      "/__devsocket",
+      "/__devsocket/**",
+    ]);
+
+    delete bridgeGlobal[testBridgeKey];
+  });
+
   it("createDevSocketPlugin configures Vite middleware bridge", async () => {
     const plugin = createDevSocketPlugin({ autoStart: false });
     const pluginObject = Array.isArray(plugin) ? plugin[0] : plugin;
@@ -201,36 +255,5 @@ describe("devsocket adapters", () => {
 
     fixture.emit("close");
     await new Promise((resolve) => setTimeout(resolve, 0));
-  });
-
-  it("devSocketSvelteKit returns a Vite-compatible plugin", async () => {
-    const plugin = devSocketSvelteKit({ autoStart: false });
-    const pluginObject = Array.isArray(plugin) ? plugin[0] : plugin;
-    const fixture = createMiddlewareAdapterServerFixture();
-
-    expect(pluginObject?.name).toBe("devsocket-bridge");
-    await pluginObject?.configureServer?.(fixture.server as never);
-    expect(fixture.getMiddlewareCount()).toBe(1);
-  });
-
-  it("devSocketRemix and devSocketReactRouter return Vite-compatible plugins", async () => {
-    const remixPlugin = devSocketRemix({ autoStart: false });
-    const reactRouterPlugin = devSocketReactRouter({ autoStart: false });
-    const remixObject = Array.isArray(remixPlugin)
-      ? remixPlugin[0]
-      : remixPlugin;
-    const reactRouterObject = Array.isArray(reactRouterPlugin)
-      ? reactRouterPlugin[0]
-      : reactRouterPlugin;
-    const remixFixture = createMiddlewareAdapterServerFixture();
-    const reactRouterFixture = createMiddlewareAdapterServerFixture();
-
-    await remixObject?.configureServer?.(remixFixture.server as never);
-    await reactRouterObject?.configureServer?.(
-      reactRouterFixture.server as never,
-    );
-
-    expect(remixFixture.getMiddlewareCount()).toBe(1);
-    expect(reactRouterFixture.getMiddlewareCount()).toBe(1);
   });
 });

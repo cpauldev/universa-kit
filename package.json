@@ -1,7 +1,7 @@
 {
   "name": "devsocket",
   "version": "0.1.0",
-  "description": "A universal bridge for in-browser dev tools for every framework. 🪼",
+  "description": "Universal bridge for in-browser development tools with cross-framework adapters, same-origin APIs, and runtime control.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -14,6 +14,14 @@
       "types": "./dist/internal.d.ts",
       "default": "./dist/internal.js"
     },
+    "./client": {
+      "types": "./dist/client/client.d.ts",
+      "default": "./dist/client/client.js"
+    },
+    "./vite": {
+      "types": "./dist/adapters/shared/plugin.d.ts",
+      "default": "./dist/adapters/shared/plugin.js"
+    },
     "./next": {
       "types": "./dist/adapters/framework/next.d.ts",
       "default": "./dist/adapters/framework/next.js"
@@ -22,17 +30,17 @@
       "types": "./dist/adapters/framework/astro.d.ts",
       "default": "./dist/adapters/framework/astro.js"
     },
+    "./angular/cli": {
+      "types": "./dist/adapters/framework/angular-cli.d.ts",
+      "default": "./dist/adapters/framework/angular-cli.js"
+    },
     "./nuxt": {
       "types": "./dist/adapters/framework/nuxt.d.ts",
       "default": "./dist/adapters/framework/nuxt.js"
     },
-    "./sveltekit": {
-      "types": "./dist/adapters/framework/sveltekit.d.ts",
-      "default": "./dist/adapters/framework/sveltekit.js"
-    },
-    "./remix": {
-      "types": "./dist/adapters/framework/remix.d.ts",
-      "default": "./dist/adapters/framework/remix.js"
+    "./bun": {
+      "types": "./dist/adapters/server/bun.d.ts",
+      "default": "./dist/adapters/server/bun.js"
     },
     "./fastify": {
       "types": "./dist/adapters/server/fastify.d.ts",
@@ -62,6 +70,8 @@
   "files": [
     "dist",
     "README.md",
+    "PROTOCOL.md",
+    "ARCHITECTURE.md",
     "LICENSE"
   ],
   "scripts": {
@@ -72,6 +82,8 @@
     "lint": "bun run lint:eslint && bun run typecheck",
     "lint:eslint": "eslint --config .config/eslint.config.mjs \"src/**/*.{ts,js,mjs}\"",
     "lint:md": "markdownlint-cli2 --config .config/.markdownlint-cli2.jsonc",
+    "docs:lint": "bun run lint:md",
+    "docs:check": "node scripts/check-doc-sync.mjs",
     "format": "prettier --config .config/.prettierrc --write --ignore-path .config/.prettierignore .",
     "test": "bun test",
     "test:watch": "bun test --watch",
@@ -82,14 +94,18 @@
     "overlay",
     "bridge",
     "vite",
+    "tanstack",
     "sveltekit",
     "remix",
     "react-router",
+    "bun",
     "fastify",
     "hono",
     "rsbuild",
     "rspack",
     "next",
+    "angular",
+    "vue",
     "astro",
     "nuxt"
   ],
@@ -97,7 +113,7 @@
     "type": "git",
     "url": "git+https://github.com/cpauldev/devsocket.git"
   },
-  "author": "Christian Paul <contact.christianpaul@gmail.com>",
+  "author": "Christian Paul",
   "license": "MIT",
   "dependencies": {
     "execa": "^9.6.0",

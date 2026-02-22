@@ -165,9 +165,16 @@ export function ensureStandaloneBridgeSingleton(
     resolvedOptions.nextBridgeGlobalKey ?? DEVSOCKET_NEXT_BRIDGE_GLOBAL_KEY;
 
   if (!bridgeGlobal[globalKey]) {
-    bridgeGlobal[globalKey] = startStandaloneDevSocketBridgeServer(
+    const startupPromise = startStandaloneDevSocketBridgeServer(
       toBridgeOptions(resolvedOptions),
     );
+    const guardedPromise = startupPromise.catch((error) => {
+      if (bridgeGlobal[globalKey] === guardedPromise) {
+        delete bridgeGlobal[globalKey];
+      }
+      throw error;
+    });
+    bridgeGlobal[globalKey] = guardedPromise;
   }
 
   const bridge = bridgeGlobal[globalKey];

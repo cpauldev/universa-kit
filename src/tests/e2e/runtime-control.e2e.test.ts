@@ -76,6 +76,41 @@ describe("runtime control e2e", () => {
     expect(echoPayload.method).toBe("POST");
     expect(echoPayload.body).toBe(JSON.stringify({ message: "hello" }));
 
+    const binaryBody = new Uint8Array([0x00, 0x01, 0xff, 0xfe, 0x0a]);
+    const binaryEchoResponse = await fetch(
+      `${server.baseUrl}/__devsocket/api/echo-binary`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/octet-stream",
+        },
+        body: binaryBody,
+      },
+    );
+    expect(binaryEchoResponse.ok).toBe(true);
+    const binaryEchoPayload = (await binaryEchoResponse.json()) as {
+      bodyHex: string;
+    };
+    expect(binaryEchoPayload.bodyHex).toBe("0001fffe0a");
+
+    const cookieResponse = await fetch(
+      `${server.baseUrl}/__devsocket/api/cookies`,
+    );
+    expect(cookieResponse.ok).toBe(true);
+    const responseHeaders = cookieResponse.headers as Headers & {
+      getSetCookie?: () => string[];
+    };
+    const setCookieValues =
+      typeof responseHeaders.getSetCookie === "function"
+        ? responseHeaders.getSetCookie()
+        : cookieResponse.headers.get("set-cookie")
+          ? [cookieResponse.headers.get("set-cookie") as string]
+          : [];
+    expect(setCookieValues).toEqual([
+      "session=abc; Path=/; HttpOnly",
+      "theme=dark; Path=/",
+    ]);
+
     const restartResult = (await (
       await fetch(`${server.baseUrl}/__devsocket/runtime/restart`, {
         method: "POST",

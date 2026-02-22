@@ -19,6 +19,11 @@ export interface RuntimeHelperOptions {
   runtimePortEnvVar?: string;
 }
 
+export interface RuntimeControlSupport {
+  hasRuntimeControl: boolean;
+  reason: "configured" | "missing_command";
+}
+
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -124,6 +129,20 @@ export class RuntimeHelper {
 
   getRuntimeUrl(): string | null {
     return this.#status.url;
+  }
+
+  getControlSupport(): RuntimeControlSupport {
+    if (!this.#options.command?.trim()) {
+      return {
+        hasRuntimeControl: false,
+        reason: "missing_command",
+      };
+    }
+
+    return {
+      hasRuntimeControl: true,
+      reason: "configured",
+    };
   }
 
   async ensureStarted(): Promise<DevSocketRuntimeStatus> {

@@ -25,19 +25,29 @@ export {
   type AstroDevSocketOptions,
 } from "./adapters/framework/astro.js";
 export {
+  createDevSocketAngularCliProxyConfig,
+  startDevSocketAngularCliBridge,
+  withDevSocketAngularCliProxyConfig,
+  type AngularCliDevSocketOptions,
+  type AngularCliDevSocketProxyConfig,
+  type AngularCliProxyTarget,
+} from "./adapters/framework/angular-cli.js";
+export {
   defineDevSocketNuxtModule,
   type NuxtDevSocketOptions,
 } from "./adapters/framework/nuxt.js";
 export {
-  devSocketSvelteKit,
-  type SvelteKitDevSocketOptions,
-} from "./adapters/framework/sveltekit.js";
-export {
-  devSocketRemix,
-  devSocketReactRouter,
-  type ReactRouterDevSocketOptions,
-  type RemixDevSocketOptions,
-} from "./adapters/framework/remix.js";
+  attachDevSocketToBunServe,
+  withDevSocketBunServeFetch,
+  withDevSocketBunServeWebSocketHandlers,
+  type BunBridgeHandle,
+  type BunDevSocketOptions,
+  type BunServeFetchHandler,
+  type BunServeLikeServer,
+  type BunServeLikeWebSocket,
+  type BunServeNextFetchHandler,
+  type BunServeWebSocketHandlers,
+} from "./adapters/server/bun.js";
 export {
   attachDevSocketToNodeServer,
   createNodeBridgeLifecycle,
@@ -85,7 +95,17 @@ export {
 export {
   RuntimeHelper,
   type RuntimeHelperOptions,
+  type RuntimeControlSupport,
 } from "./runtime/runtime-helper.js";
+export {
+  DevSocketClientError,
+  createDevSocketClient,
+  type DevSocketBridgeHealth,
+  type DevSocketClient,
+  type DevSocketClientOptions,
+  type DevSocketEventsSubscriptionOptions,
+  type DevSocketWebSocketLike,
+} from "./client/client.js";
 export type {
   DevSocketBridgeCapabilities,
   DevSocketBridgeEvent,

@@ -1,3 +1,5 @@
+import type { IncomingMessage, ServerResponse } from "http";
+
 import {
   createBridgeLifecycle,
   resolveAdapterOptions,
@@ -9,8 +11,8 @@ import {
 export interface SetupMiddlewaresApp {
   use: (
     fn: (
-      req: unknown,
-      res: unknown,
+      req: IncomingMessage,
+      res: ServerResponse,
       next: (error?: unknown) => void,
     ) => void,
   ) => void;
@@ -49,7 +51,7 @@ function toMiddlewareAdapterServer(
   return {
     middlewares: {
       use: (handler) => {
-        app.use(handler as never);
+        app.use(handler);
       },
     },
     httpServer: devServer.server ?? null,
@@ -76,18 +78,13 @@ export function withDevSocketSetupMiddlewares<
   return {
     ...config,
     setupMiddlewares: (middlewares, devServer) => {
-      const adapterServer = toMiddlewareAdapterServer(
-        devServer as SetupMiddlewaresDevServerLike,
-      );
+      const adapterServer = toMiddlewareAdapterServer(devServer);
       if (adapterServer) {
         void lifecycle.setup(adapterServer);
       }
 
       if (originalSetupMiddlewares) {
-        return originalSetupMiddlewares(
-          middlewares,
-          devServer as TDevServer,
-        );
+        return originalSetupMiddlewares(middlewares, devServer);
       }
       return middlewares;
     },

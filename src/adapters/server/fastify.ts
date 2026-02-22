@@ -20,10 +20,18 @@ export interface FastifyLikeReply {
 }
 
 export interface FastifyLikeInstance {
-  addHook: (
-    name: "onRequest" | "onClose",
-    hook: (...args: unknown[]) => void,
-  ) => void;
+  addHook(
+    name: "onRequest",
+    hook: (
+      request: FastifyLikeRequest,
+      reply: FastifyLikeReply,
+      done: FastifyDone,
+    ) => void,
+  ): void;
+  addHook(
+    name: "onClose",
+    hook: (instance: unknown, done: FastifyDone) => void,
+  ): void;
 }
 
 export interface FastifyBridgeHandle {
@@ -44,28 +52,31 @@ export async function attachDevSocketToFastify(
 ): Promise<FastifyBridgeHandle> {
   const bridge = await createDevSocketBridge(resolveAdapterOptions(options));
 
-  fastify.addHook("onRequest", ((
-    request: FastifyLikeRequest,
-    reply: FastifyLikeReply,
-    done: FastifyDone,
-  ) => {
-    void bridge
-      .handleHttpRequest(request.raw, reply.raw, (error) =>
-        done(error ? toError(error) : undefined),
-      )
-      .catch((error) => {
-        if (!reply.raw.writableEnded) {
-          done(toError(error));
-        }
-      });
-  }) as (...args: unknown[]) => void);
+  fastify.addHook(
+    "onRequest",
+    (
+      request: FastifyLikeRequest,
+      reply: FastifyLikeReply,
+      done: FastifyDone,
+    ) => {
+      void bridge
+        .handleHttpRequest(request.raw, reply.raw, (error) =>
+          done(error ? toError(error) : undefined),
+        )
+        .catch((error) => {
+          if (!reply.raw.writableEnded) {
+            done(toError(error));
+          }
+        });
+    },
+  );
 
-  fastify.addHook("onClose", ((_instance: unknown, done: FastifyDone) => {
+  fastify.addHook("onClose", (_instance: unknown, done: FastifyDone) => {
     void bridge
       .close()
       .then(() => done())
       .catch((error) => done(toError(error)));
-  }) as (...args: unknown[]) => void);
+  });
 
   return {
     bridge,
