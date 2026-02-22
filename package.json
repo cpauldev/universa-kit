@@ -1,7 +1,7 @@
 {
   "name": "devsocket",
   "version": "0.1.0",
-  "description": "Framework-agnostic bridge for dev overlays with same-origin APIs and runtime control.",
+  "description": "A universal bridge for in-browser dev tools for every framework. 🪼",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

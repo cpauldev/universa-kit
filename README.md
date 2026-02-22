@@ -1,8 +1,17 @@
 # DevSocket 🪼
 
-Framework-agnostic bridge for dev overlays with same-origin APIs and runtime control.
+<p align="center">
+  <img src="assets/jellyfishy.png" alt="DevSocket jellyfish mascot" width="80" style="vertical-align: middle;" />
+  <img src="assets/devsocket-logo.png" alt="DevSocket logo" width="420" style="vertical-align: middle;" />
+</p>
 
-DevSocket attaches to host dev servers and exposes a same-origin control plane (`/__devsocket/*`) so tool UIs can read runtime state, stream events, run runtime actions, and proxy runtime APIs consistently across frameworks.
+<p align="center">
+  <a href="https://github.com/cpauldev/devsocket/actions/workflows/ci.yml"><img alt="build" src="https://img.shields.io/github/actions/workflow/status/cpauldev/devsocket/ci.yml?branch=main&style=for-the-badge&label=build" height="28" style="vertical-align: middle;" /></a>
+  <a href="https://github.com/cpauldev/devsocket/releases"><img alt="release" src="https://img.shields.io/github/v/release/cpauldev/devsocket?style=for-the-badge&label=release" height="28" style="vertical-align: middle;" /></a>
+  <a href="LICENSE"><img alt="license" src="https://img.shields.io/github/license/cpauldev/devsocket?style=for-the-badge&label=license" height="28" style="vertical-align: middle;" /></a>
+</p>
+
+DevSocket is a universal bridge for in-browser dev tools that works with every framework. It attaches to host dev servers and exposes a same-origin control plane (`/__devsocket/*`) so tool UIs can read runtime state, stream events, run runtime actions, and proxy runtime APIs consistently across every framework — allowing tools and applications to run on Next.js, Astro, Nuxt, SvelteKit, Remix, and more.
 
 ## Who Should Use This
 
@@ -84,6 +93,10 @@ npm i devsocket
 
 ```bash
 pnpm add devsocket
+```
+
+```bash
+yarn add devsocket
 ```
 
 ```bash
