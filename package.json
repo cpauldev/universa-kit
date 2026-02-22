@@ -1,7 +1,7 @@
 {
   "name": "devsocket",
   "version": "0.1.0",
-  "description": "Framework adapters and bridge/runtime orchestration for same-origin dev overlays",
+  "description": "Framework-agnostic bridge for dev overlays with same-origin APIs and runtime control.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

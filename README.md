@@ -1,6 +1,6 @@
 # DevSocket
 
-Framework-agnostic bridge and runtime control layer for browser-based developer tools.
+Framework-agnostic bridge for dev overlays with same-origin APIs and runtime control.
 
 DevSocket attaches to host dev servers and exposes a same-origin control plane (`/__devsocket/*`) so tool UIs can read runtime state, stream events, run runtime actions, and proxy runtime APIs consistently across frameworks.
 
