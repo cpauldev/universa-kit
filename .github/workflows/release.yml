@@ -81,8 +81,6 @@ jobs:
 
       - name: Publish to npm
         if: steps.npm_version.outputs.already_published != 'true'
-        env:
-          NODE_AUTH_TOKEN: ""
         run: npm publish --access public --provenance
 
       - name: Create GitHub Release
