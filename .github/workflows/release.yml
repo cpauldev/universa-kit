@@ -26,7 +26,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22.x
-          registry-url: "https://registry.npmjs.org"
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -66,6 +65,8 @@ jobs:
         run: npm pack
 
       - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ""
         run: npm publish --access public --provenance
 
       - name: Create GitHub Release
