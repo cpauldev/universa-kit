@@ -27,7 +27,7 @@ function ensureBridge(
   return ensureStandaloneBridgeSingleton(options);
 }
 
-export function withBridgeSocketNext<T extends Record<string, unknown>>(
+export function withBridgeSocketNext<T extends object>(
   nextConfig: T,
   options: BridgeSocketNextOptions = {},
 ): T {

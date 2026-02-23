@@ -12,7 +12,6 @@ export {
   type StandaloneBridgeServer,
 } from "./bridge/standalone.js";
 export {
-  createBridgeSocketUnplugin,
   createBridgeSocketVitePlugin,
   type BridgeSocketVitePluginOptions,
 } from "./adapters/shared/plugin.js";

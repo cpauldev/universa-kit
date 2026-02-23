@@ -25,7 +25,7 @@ BridgeSocket is a universal bridge for local development tools. It mounts a same
 
 - [Why BridgeSocket Matters](#why-bridgesocket-matters)
 - [What It Provides](#what-it-provides)
-- [Common Use Cases](#common-use-cases)
+- [Use Cases](#use-cases)
 - [Install](#install)
 - [Quick Start](#quick-start)
 - [Integration Surfaces](#integration-surfaces)
@@ -42,9 +42,11 @@ BridgeSocket is a universal bridge for local development tools. It mounts a same
 
 ## Why BridgeSocket Matters
 
-If you build a local dev tool that appears next to an app (overlay, sidebar, control panel), framework-specific integration becomes expensive fast. Frameworks, servers, and build tools expose different hooks, so teams either reimplement the same integration layer repeatedly, support one stack only, or skip the tool entirely.
+Imagine you’re building a developer companion that runs next to a local web app, such as an overlay, sidebar, or control panel. It might be a paid tool suite, a component marketplace with drag-and-drop editing, or a CLI companion UI for setup and real-time project status. You want it to work across frameworks instead of being tied to one stack, similarly to wanting an app to work on iOS, Android, and desktop rather than one specific operating system.
 
-BridgeSocket gives you one shared adapter and bridge layer so you can focus on product behavior and UX while BridgeSocket handles integration and transport.
+The problem is that frameworks, dev servers, and build tools all expose integration hooks differently. Without a shared integration layer, teams either rebuild the same glue code per stack, support only one framework, or drop the idea due to complexity.
+
+BridgeSocket solves this by providing a shared adapter + bridge layer, so you can build the product and UX, while BridgeSocket handles cross-framework integration and same-origin transport. With BridgeSocket, developers can create univerally-compatible plugins and users can use them on the framework of their choice with minimal setup.
 
 BridgeSocket primarily targets browser-based dev UIs, but the same bridge also works for non-UI local clients such as scripts and CLIs.
 
@@ -62,13 +64,13 @@ BridgeSocket primarily targets browser-based dev UIs, but the same bridge also w
 
 BridgeSocket does not include a first-party UI, app scaffolding, or hosted cloud services.
 
-## Common Use Cases
+## Use Cases
 
-- Cross-framework SaaS developer tools
-- AI code-assistance overlays
-- Local developer extension marketplaces
-- Drag-and-drop UI composition and page editing tools
-- Error triage, debugging, and remediation control panels
+- Cross-framework SaaS services with auth and subscription flows
+- AI code-assistance overlays with page annotations
+- Extension marketplaces for local development apps
+- UI component-library drag-and-drop and page editing tools
+- Error triage, debugging, and AI-assisted remediation workflows
 - Localization and internationalization management systems
 
 ## Install
@@ -144,8 +146,8 @@ Common APIs:
 
 | API                                       | Import path                |
 | ----------------------------------------- | -------------------------- |
+| `createBridgeSocketToolPreset`            | `bridgesocket/preset`      |
 | `createBridgeSocketVitePlugin`            | `bridgesocket/vite`        |
-| `createBridgeSocketUnplugin`              | `bridgesocket`             |
 | `withBridgeSocketNext`                    | `bridgesocket/next`        |
 | `createBridgeSocketAstroIntegration`      | `bridgesocket/astro`       |
 | `createBridgeSocketNuxtModule`            | `bridgesocket/nuxt`        |
@@ -159,6 +161,18 @@ Common APIs:
 | `withBridgeSocketWebpackDevServer`        | `bridgesocket/webpack`     |
 | `withBridgeSocketRsbuild`                 | `bridgesocket/rsbuild`     |
 | `withBridgeSocketRspack`                  | `bridgesocket/rspack`      |
+
+Preset helper (for tool packages that want one unified export):
+
+```ts
+import { createBridgeSocketToolPreset } from "bridgesocket/preset";
+
+export const myTool = createBridgeSocketToolPreset({
+  command: "mytool",
+  args: ["dev"],
+  fallbackCommand: "mytool dev",
+});
+```
 
 ## Configuration
 
@@ -410,6 +424,7 @@ export default withBridgeSocketNext(
 ## Documentation
 
 - `README.md`: product overview, installation, and integration entrypoints
+- `INTEGRATION_GUIDE.md`: end-to-end example for building a CLI-style tool package and user project setup
 - `PROTOCOL.md`: normative bridge contract (routes, events, errors, versioning)
 - `ARCHITECTURE.md`: internal component boundaries and data flow
 
