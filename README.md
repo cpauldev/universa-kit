@@ -42,7 +42,7 @@ BridgeSocket is a universal bridge for local development tools. It mounts a same
 
 ## Why BridgeSocket Matters
 
-Imagine you’re building a developer companion that runs next to a local web app, such as an overlay, sidebar, or control panel. It might be a paid tool suite, a component marketplace with drag-and-drop editing, or a CLI companion UI for setup and real-time project status. You want it to work across frameworks instead of being tied to one stack, similarly to wanting an app to work on iOS, Android, and desktop rather than one specific operating system.
+Imagine you’re building a plugin that runs next to a local web app, such as an overlay, sidebar, or control panel. It might be a paid tool suite, a component marketplace with drag-and-drop editing, or web UI for a CLI's setup process and real-time project status. You want it to work across frameworks instead of being tied to one stack, similarly to an app working on many operating system rather than one.
 
 The problem is that frameworks, dev servers, and build tools all expose integration hooks differently. Without a shared integration layer, teams either rebuild the same glue code per stack, support only one framework, or drop the idea due to complexity.
 
