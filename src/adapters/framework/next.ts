@@ -11,7 +11,7 @@ import {
 
 type MaybePromise<T> = T | Promise<T>;
 
-export type NextDevSocketOptions = DevSocketAdapterOptions;
+export type DevSocketNextOptions = DevSocketAdapterOptions;
 
 const NEXT_BRIDGE_GLOBAL_KEY_PREFIX = `${DEVSOCKET_NEXT_BRIDGE_GLOBAL_KEY}:next`;
 let nextBridgeInstanceCounter = 0;
@@ -22,14 +22,14 @@ function createDefaultNextBridgeGlobalKey(): string {
 }
 
 function ensureBridge(
-  options: NextDevSocketOptions,
+  options: DevSocketNextOptions,
 ): Promise<StandaloneBridgeServer> {
   return ensureStandaloneBridgeSingleton(options);
 }
 
-export function withDevSocket<T extends Record<string, unknown>>(
+export function withDevSocketNext<T extends Record<string, unknown>>(
   nextConfig: T,
-  options: NextDevSocketOptions = {},
+  options: DevSocketNextOptions = {},
 ): T {
   const isDev = process.env.NODE_ENV !== "production";
   if (!isDev) {

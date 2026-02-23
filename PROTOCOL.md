@@ -17,6 +17,7 @@ This document is the normative source of truth for the DevSocket bridge protocol
 
 Backward-incompatible protocol changes must increment this version.
 Adding or updating adapter surfaces (framework, server, or build-tool) alone does not change protocol versioning.
+Adapter API naming changes also do not change protocol versioning as long as route/event/error semantics remain the same.
 
 ## Route Prefix
 

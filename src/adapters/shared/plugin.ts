@@ -7,9 +7,9 @@ import {
   resolveAdapterOptions,
 } from "./adapter-utils.js";
 
-export type DevSocketPluginOptions = DevSocketAdapterOptions;
+export type DevSocketVitePluginOptions = DevSocketAdapterOptions;
 
-const unplugin = createUnplugin<DevSocketPluginOptions | undefined>(
+const unplugin = createUnplugin<DevSocketVitePluginOptions | undefined>(
   (options = {}) => {
     const resolvedOptions = resolveAdapterOptions(options);
     const lifecycle = createBridgeLifecycle(resolvedOptions);
@@ -26,6 +26,6 @@ const unplugin = createUnplugin<DevSocketPluginOptions | undefined>(
   },
 );
 
-export const createDevSocketPlugin = unplugin.vite;
+export const createDevSocketVitePlugin = unplugin.vite;
 
-export { unplugin as devSocketUnplugin };
+export { unplugin as createDevSocketUnplugin };

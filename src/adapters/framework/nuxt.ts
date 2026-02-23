@@ -3,11 +3,11 @@ import {
   appendPlugin,
   resolveAdapterOptions,
 } from "../shared/adapter-utils.js";
-import { createDevSocketPlugin } from "../shared/plugin.js";
+import { createDevSocketVitePlugin } from "../shared/plugin.js";
 
-export type NuxtDevSocketOptions = DevSocketAdapterOptions;
+export type DevSocketNuxtOptions = DevSocketAdapterOptions;
 
-export function defineDevSocketNuxtModule(options: NuxtDevSocketOptions = {}) {
+export function createDevSocketNuxtModule(options: DevSocketNuxtOptions = {}) {
   const resolvedOptions = resolveAdapterOptions(options);
 
   return {
@@ -27,7 +27,7 @@ export function defineDevSocketNuxtModule(options: NuxtDevSocketOptions = {}) {
       hook("vite:extendConfig", ((config: { plugins?: unknown[] }) => {
         config.plugins = appendPlugin(
           config.plugins,
-          createDevSocketPlugin(resolvedOptions),
+          createDevSocketVitePlugin(resolvedOptions),
         );
       }) as (...args: unknown[]) => void);
     },

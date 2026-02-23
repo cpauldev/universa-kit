@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "bun:test";
 import { type IncomingMessage, type ServerResponse, createServer } from "http";
 
-import { createDevSocketPlugin } from "../../adapters/shared/plugin.js";
+import { createDevSocketVitePlugin } from "../../adapters/shared/plugin.js";
 
 type MiddlewareHandler = (
   req: IncomingMessage,
@@ -85,7 +85,7 @@ describe("plugin integration", () => {
     const harness = await createViteLikeHarness();
     harnesses.add(harness);
 
-    const plugin = createDevSocketPlugin({ autoStart: false });
+    const plugin = createDevSocketVitePlugin({ autoStart: false });
     const pluginObject = Array.isArray(plugin) ? plugin[0] : plugin;
     await pluginObject?.configureServer?.(harness.server as never);
 

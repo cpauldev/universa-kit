@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "bun:test";
 
-import { withDevSocket } from "../../adapters/framework/next.js";
+import { withDevSocketNext } from "../../adapters/framework/next.js";
 import { DEVSOCKET_NEXT_BRIDGE_GLOBAL_KEY } from "../../adapters/shared/adapter-utils.js";
 
 const originalNodeEnv = process.env.NODE_ENV;
@@ -25,7 +25,7 @@ afterEach(async () => {
 describe("next integration", () => {
   it("starts standalone bridge and rewrites to it", async () => {
     process.env.NODE_ENV = "development";
-    const wrapped = withDevSocket(
+    const wrapped = withDevSocketNext(
       {
         rewrites: async () => [
           {

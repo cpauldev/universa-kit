@@ -4,11 +4,11 @@ import {
   createDevSocketAngularCliProxyConfig,
   withDevSocketAngularCliProxyConfig,
 } from "../adapters/framework/angular-cli.js";
-import { devSocketAstro } from "../adapters/framework/astro.js";
-import { withDevSocket } from "../adapters/framework/next.js";
-import { defineDevSocketNuxtModule } from "../adapters/framework/nuxt.js";
+import { createDevSocketAstroIntegration } from "../adapters/framework/astro.js";
+import { withDevSocketNext } from "../adapters/framework/next.js";
+import { createDevSocketNuxtModule } from "../adapters/framework/nuxt.js";
 import { DEVSOCKET_NEXT_BRIDGE_GLOBAL_KEY } from "../adapters/shared/adapter-utils.js";
-import { createDevSocketPlugin } from "../adapters/shared/plugin.js";
+import { createDevSocketVitePlugin } from "../adapters/shared/plugin.js";
 import { createMiddlewareAdapterServerFixture } from "./utils/adapter-server-fixtures.js";
 
 const originalNodeEnv = process.env.NODE_ENV;
@@ -49,7 +49,7 @@ afterEach(async () => {
 });
 
 describe("devsocket adapters", () => {
-  it("withDevSocket injects bridge rewrites first", async () => {
+  it("withDevSocketNext injects bridge rewrites first", async () => {
     process.env.NODE_ENV = "development";
     const testBridgeKey = `${DEVSOCKET_NEXT_BRIDGE_GLOBAL_KEY}:test-adapters`;
     const bridgeGlobal = globalThis as typeof globalThis & {
@@ -62,7 +62,7 @@ describe("devsocket adapters", () => {
       close: async () => undefined,
     });
 
-    const config = withDevSocket(
+    const config = withDevSocketNext(
       {
         rewrites: async () => [
           {
@@ -98,19 +98,23 @@ describe("devsocket adapters", () => {
     delete bridgeGlobal[testBridgeKey];
   });
 
-  it("withDevSocket is a no-op in production", () => {
+  it("withDevSocketNext is a no-op in production", () => {
     process.env.NODE_ENV = "production";
     const config = { trailingSlash: true };
-    const wrapped = withDevSocket(config);
+    const wrapped = withDevSocketNext(config);
     expect(wrapped).toBe(config);
   });
 
-  it("withDevSocket creates isolated bridge instances by default", async () => {
+  it("withDevSocketNext creates isolated bridge instances by default", async () => {
     process.env.NODE_ENV = "development";
     const passthroughRule = { source: "/noop/:path*", destination: "/noop" };
 
-    const first = withDevSocket({ rewrites: async () => [passthroughRule] });
-    const second = withDevSocket({ rewrites: async () => [passthroughRule] });
+    const first = withDevSocketNext({
+      rewrites: async () => [passthroughRule],
+    });
+    const second = withDevSocketNext({
+      rewrites: async () => [passthroughRule],
+    });
 
     const firstRewrites = await first.rewrites?.();
     const secondRewrites = await second.rewrites?.();
@@ -133,8 +137,8 @@ describe("devsocket adapters", () => {
     expect(firstDestination).not.toBe(secondDestination);
   });
 
-  it("defineDevSocketNuxtModule injects plugin hook only in dev", () => {
-    const module = defineDevSocketNuxtModule();
+  it("createDevSocketNuxtModule injects plugin hook only in dev", () => {
+    const module = createDevSocketNuxtModule();
     const hooks: Record<string, (...args: unknown[]) => void> = {};
     module.setup(
       {},
@@ -166,8 +170,8 @@ describe("devsocket adapters", () => {
     expect(prodHooks["vite:extendConfig"]).toBeUndefined();
   });
 
-  it("devSocketAstro wires setup and teardown hooks", async () => {
-    const integration = devSocketAstro({ autoStart: false });
+  it("createDevSocketAstroIntegration wires setup and teardown hooks", async () => {
+    const integration = createDevSocketAstroIntegration({ autoStart: false });
     const fixture = createMiddlewareAdapterServerFixture();
 
     await (
@@ -240,8 +244,8 @@ describe("devsocket adapters", () => {
     delete bridgeGlobal[testBridgeKey];
   });
 
-  it("createDevSocketPlugin configures Vite middleware bridge", async () => {
-    const plugin = createDevSocketPlugin({ autoStart: false });
+  it("createDevSocketVitePlugin configures Vite middleware bridge", async () => {
+    const plugin = createDevSocketVitePlugin({ autoStart: false });
     const pluginObject = Array.isArray(plugin) ? plugin[0] : plugin;
     const fixture = createMiddlewareAdapterServerFixture();
 

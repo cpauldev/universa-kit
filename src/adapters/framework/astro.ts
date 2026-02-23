@@ -7,7 +7,9 @@ import {
 
 export type AstroDevSocketOptions = DevSocketAdapterOptions;
 
-export function devSocketAstro(options: AstroDevSocketOptions = {}) {
+export function createDevSocketAstroIntegration(
+  options: AstroDevSocketOptions = {},
+) {
   const resolvedOptions = resolveAdapterOptions(options);
   const lifecycle = createBridgeLifecycle(resolvedOptions);
 

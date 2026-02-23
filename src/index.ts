@@ -12,16 +12,16 @@ export {
   type StandaloneBridgeServer,
 } from "./bridge/standalone.js";
 export {
-  createDevSocketPlugin,
-  devSocketUnplugin,
-  type DevSocketPluginOptions,
+  createDevSocketUnplugin,
+  createDevSocketVitePlugin,
+  type DevSocketVitePluginOptions,
 } from "./adapters/shared/plugin.js";
 export {
-  withDevSocket,
-  type NextDevSocketOptions,
+  withDevSocketNext,
+  type DevSocketNextOptions,
 } from "./adapters/framework/next.js";
 export {
-  devSocketAstro,
+  createDevSocketAstroIntegration,
   type AstroDevSocketOptions,
 } from "./adapters/framework/astro.js";
 export {
@@ -33,8 +33,8 @@ export {
   type AngularCliProxyTarget,
 } from "./adapters/framework/angular-cli.js";
 export {
-  defineDevSocketNuxtModule,
-  type NuxtDevSocketOptions,
+  createDevSocketNuxtModule,
+  type DevSocketNuxtOptions,
 } from "./adapters/framework/nuxt.js";
 export {
   attachDevSocketToBunServe,
