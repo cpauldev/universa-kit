@@ -1,15 +1,15 @@
 import { createUnplugin } from "unplugin";
 
 import {
-  type DevSocketAdapterOptions,
+  type BridgeSocketAdapterOptions,
   type ViteAdapterServer,
   createBridgeLifecycle,
   resolveAdapterOptions,
 } from "./adapter-utils.js";
 
-export type DevSocketVitePluginOptions = DevSocketAdapterOptions;
+export type BridgeSocketVitePluginOptions = BridgeSocketAdapterOptions;
 
-const unplugin = createUnplugin<DevSocketVitePluginOptions | undefined>(
+const unplugin = createUnplugin<BridgeSocketVitePluginOptions | undefined>(
   (options = {}) => {
     const resolvedOptions = resolveAdapterOptions(options);
     const lifecycle = createBridgeLifecycle(resolvedOptions);
@@ -26,6 +26,6 @@ const unplugin = createUnplugin<DevSocketVitePluginOptions | undefined>(
   },
 );
 
-export const createDevSocketVitePlugin = unplugin.vite;
+export const createBridgeSocketVitePlugin = unplugin.vite;
 
-export { unplugin as createDevSocketUnplugin };
+export { unplugin as createBridgeSocketUnplugin };

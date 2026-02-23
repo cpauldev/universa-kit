@@ -3,10 +3,10 @@ import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 import { WebSocket } from "ws";
 
-import { DEVSOCKET_WS_SUBPROTOCOL } from "../../bridge/constants.js";
+import { BRIDGESOCKET_WS_SUBPROTOCOL } from "../../bridge/constants.js";
 import {
   type StandaloneBridgeServer,
-  startStandaloneDevSocketBridgeServer,
+  startStandaloneBridgeSocketBridgeServer,
 } from "../../bridge/standalone.js";
 
 interface RuntimeStatusEvent {
@@ -97,7 +97,7 @@ async function waitForRuntimePhase(
 
 describe("bridge events e2e", () => {
   it("emits runtime-status events for start and stop", async () => {
-    const server = await startStandaloneDevSocketBridgeServer({
+    const server = await startStandaloneBridgeSocketBridgeServer({
       autoStart: false,
       command: process.execPath,
       args: [fixtureRuntimeScript],
@@ -106,8 +106,8 @@ describe("bridge events e2e", () => {
     standaloneServers.add(server);
 
     const socket = new WebSocket(
-      `${toWebSocketUrl(server.baseUrl)}/__devsocket/events`,
-      [DEVSOCKET_WS_SUBPROTOCOL],
+      `${toWebSocketUrl(server.baseUrl)}/__bridgesocket/events`,
+      [BRIDGESOCKET_WS_SUBPROTOCOL],
     );
     sockets.add(socket);
 
@@ -115,10 +115,10 @@ describe("bridge events e2e", () => {
       socket.once("open", () => resolve());
       socket.once("error", (error) => reject(error));
     });
-    expect(socket.protocol).toBe(DEVSOCKET_WS_SUBPROTOCOL);
+    expect(socket.protocol).toBe(BRIDGESOCKET_WS_SUBPROTOCOL);
 
     const runningPhasePromise = waitForRuntimePhase(socket, "running");
-    await fetch(`${server.baseUrl}/__devsocket/runtime/start`, {
+    await fetch(`${server.baseUrl}/__bridgesocket/runtime/start`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: "{}",
@@ -127,7 +127,7 @@ describe("bridge events e2e", () => {
     expect(runningPhase.protocolVersion).toBe("1");
 
     const stoppedPhasePromise = waitForRuntimePhase(socket, "stopped");
-    await fetch(`${server.baseUrl}/__devsocket/runtime/stop`, {
+    await fetch(`${server.baseUrl}/__bridgesocket/runtime/stop`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: "{}",
@@ -138,14 +138,14 @@ describe("bridge events e2e", () => {
   });
 
   it("accepts websocket when supported subprotocol is present in offered list", async () => {
-    const server = await startStandaloneDevSocketBridgeServer({
+    const server = await startStandaloneBridgeSocketBridgeServer({
       autoStart: false,
     });
     standaloneServers.add(server);
 
     const socket = new WebSocket(
-      `${toWebSocketUrl(server.baseUrl)}/__devsocket/events`,
-      ["devsocket.v999+json", DEVSOCKET_WS_SUBPROTOCOL],
+      `${toWebSocketUrl(server.baseUrl)}/__bridgesocket/events`,
+      ["bridgesocket.v999+json", BRIDGESOCKET_WS_SUBPROTOCOL],
     );
     sockets.add(socket);
 
@@ -154,6 +154,6 @@ describe("bridge events e2e", () => {
       socket.once("error", (error) => reject(error));
     });
 
-    expect(socket.protocol).toBe(DEVSOCKET_WS_SUBPROTOCOL);
+    expect(socket.protocol).toBe(BRIDGESOCKET_WS_SUBPROTOCOL);
   });
 });

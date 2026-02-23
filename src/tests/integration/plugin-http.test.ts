@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "bun:test";
 import { type IncomingMessage, type ServerResponse, createServer } from "http";
 
-import { createDevSocketVitePlugin } from "../../adapters/shared/plugin.js";
+import { createBridgeSocketVitePlugin } from "../../adapters/shared/plugin.js";
 
 type MiddlewareHandler = (
   req: IncomingMessage,
@@ -85,11 +85,11 @@ describe("plugin integration", () => {
     const harness = await createViteLikeHarness();
     harnesses.add(harness);
 
-    const plugin = createDevSocketVitePlugin({ autoStart: false });
+    const plugin = createBridgeSocketVitePlugin({ autoStart: false });
     const pluginObject = Array.isArray(plugin) ? plugin[0] : plugin;
     await pluginObject?.configureServer?.(harness.server as never);
 
-    const response = await fetch(`${harness.baseUrl}/__devsocket/health`);
+    const response = await fetch(`${harness.baseUrl}/__bridgesocket/health`);
     expect(response.ok).toBe(true);
     const payload = (await response.json()) as {
       ok: boolean;
@@ -102,6 +102,6 @@ describe("plugin integration", () => {
     expect(payload.ok).toBe(true);
     expect(payload.bridge).toBe(true);
     expect(payload.protocolVersion).toBe("1");
-    expect(payload.capabilities.wsSubprotocol).toBe("devsocket.v1+json");
+    expect(payload.capabilities.wsSubprotocol).toBe("bridgesocket.v1+json");
   });
 });

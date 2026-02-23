@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
-import { attachDevSocketToFastify } from "../adapters/server/fastify.js";
+import { attachBridgeSocketToFastify } from "../adapters/server/fastify.js";
 
 type HookHandler = (...args: unknown[]) => void;
 
@@ -28,7 +28,7 @@ function createFastifyFixture(): {
 describe("fastify adapter", () => {
   it("registers request/close hooks and forwards non-bridge routes", async () => {
     const fixture = createFastifyFixture();
-    const handle = await attachDevSocketToFastify(fixture.fastify, {
+    const handle = await attachBridgeSocketToFastify(fixture.fastify, {
       autoStart: false,
     });
 
@@ -41,7 +41,7 @@ describe("fastify adapter", () => {
     onRequest?.(
       {
         raw: {
-          url: "/not-devsocket",
+          url: "/not-bridgesocket",
           method: "GET",
         },
       },

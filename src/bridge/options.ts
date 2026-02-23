@@ -5,7 +5,7 @@ import {
   WS_HEARTBEAT_INTERVAL_MS_DEFAULT,
 } from "./constants.js";
 
-export interface DevSocketBridgeOptions extends RuntimeHelperOptions {
+export interface BridgeSocketBridgeOptions extends RuntimeHelperOptions {
   autoStart?: boolean;
   bridgePathPrefix?: string;
   fallbackCommand?: string;
@@ -14,7 +14,7 @@ export interface DevSocketBridgeOptions extends RuntimeHelperOptions {
 
 export type ResolvedBridgeOptions = Required<
   Pick<
-    DevSocketBridgeOptions,
+    BridgeSocketBridgeOptions,
     | "autoStart"
     | "bridgePathPrefix"
     | "fallbackCommand"
@@ -22,7 +22,7 @@ export type ResolvedBridgeOptions = Required<
   >
 > &
   Omit<
-    DevSocketBridgeOptions,
+    BridgeSocketBridgeOptions,
     | "autoStart"
     | "bridgePathPrefix"
     | "fallbackCommand"
@@ -30,7 +30,7 @@ export type ResolvedBridgeOptions = Required<
   >;
 
 export function resolveBridgeOptions(
-  options: DevSocketBridgeOptions,
+  options: BridgeSocketBridgeOptions,
 ): ResolvedBridgeOptions {
   return {
     autoStart: options.autoStart ?? true,

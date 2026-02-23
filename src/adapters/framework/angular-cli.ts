@@ -1,11 +1,12 @@
 import type { StandaloneBridgeServer } from "../../bridge/standalone.js";
 import {
-  type DevSocketAdapterOptions,
+  type BridgeSocketAdapterOptions,
   ensureStandaloneBridgeSingleton,
   resolveAdapterOptions,
 } from "../shared/adapter-utils.js";
 
-const ANGULAR_CLI_BRIDGE_GLOBAL_KEY_PREFIX = "__DEVSOCKET_ANGULAR_CLI_BRIDGE__";
+const ANGULAR_CLI_BRIDGE_GLOBAL_KEY_PREFIX =
+  "__BRIDGESOCKET_ANGULAR_CLI_BRIDGE__";
 let angularCliBridgeInstanceCounter = 0;
 
 function createDefaultAngularCliBridgeGlobalKey(): string {
@@ -36,18 +37,18 @@ export interface AngularCliProxyTarget {
   logLevel: "warn";
 }
 
-export type AngularCliDevSocketProxyConfig = Record<
+export type AngularCliBridgeSocketProxyConfig = Record<
   string,
   AngularCliProxyTarget
 >;
 
-export interface AngularCliDevSocketOptions extends DevSocketAdapterOptions {
+export interface AngularCliBridgeSocketOptions extends BridgeSocketAdapterOptions {
   angularCliBridgeGlobalKey?: string;
   proxyContext?: string;
 }
 
-export async function startDevSocketAngularCliBridge(
-  options: AngularCliDevSocketOptions = {},
+export async function startBridgeSocketAngularCliBridge(
+  options: AngularCliBridgeSocketOptions = {},
 ): Promise<StandaloneBridgeServer> {
   const { angularCliBridgeGlobalKey, ...adapterOptions } = options;
   const resolvedOptions = resolveAdapterOptions(adapterOptions);
@@ -60,12 +61,12 @@ export async function startDevSocketAngularCliBridge(
   });
 }
 
-export async function createDevSocketAngularCliProxyConfig(
-  options: AngularCliDevSocketOptions = {},
-): Promise<AngularCliDevSocketProxyConfig> {
-  const bridge = await startDevSocketAngularCliBridge(options);
+export async function createBridgeSocketAngularCliProxyConfig(
+  options: AngularCliBridgeSocketOptions = {},
+): Promise<AngularCliBridgeSocketProxyConfig> {
+  const bridge = await startBridgeSocketAngularCliBridge(options);
   const proxyContext = normalizeProxyContext(
-    options.proxyContext ?? options.bridgePathPrefix ?? "/__devsocket",
+    options.proxyContext ?? options.bridgePathPrefix ?? "/__bridgesocket",
   );
   const proxyTarget = createProxyTarget(bridge.baseUrl);
 
@@ -75,12 +76,12 @@ export async function createDevSocketAngularCliProxyConfig(
   };
 }
 
-export async function withDevSocketAngularCliProxyConfig(
-  existingProxyConfig: AngularCliDevSocketProxyConfig = {},
-  options: AngularCliDevSocketOptions = {},
-): Promise<AngularCliDevSocketProxyConfig> {
+export async function withBridgeSocketAngularCliProxyConfig(
+  existingProxyConfig: AngularCliBridgeSocketProxyConfig = {},
+  options: AngularCliBridgeSocketOptions = {},
+): Promise<AngularCliBridgeSocketProxyConfig> {
   return {
     ...existingProxyConfig,
-    ...(await createDevSocketAngularCliProxyConfig(options)),
+    ...(await createBridgeSocketAngularCliProxyConfig(options)),
   };
 }

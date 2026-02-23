@@ -1,21 +1,21 @@
-export type DevSocketRuntimePhase =
+export type BridgeSocketRuntimePhase =
   | "stopped"
   | "starting"
   | "running"
   | "stopping"
   | "error";
 
-export type DevSocketProtocolVersion = "1";
+export type BridgeSocketProtocolVersion = "1";
 
-export interface DevSocketRuntimeStatus {
-  phase: DevSocketRuntimePhase;
+export interface BridgeSocketRuntimeStatus {
+  phase: BridgeSocketRuntimePhase;
   url: string | null;
   pid: number | null;
   startedAt: number | null;
   lastError: string | null;
 }
 
-export type DevSocketErrorCode =
+export type BridgeSocketErrorCode =
   | "invalid_request"
   | "route_not_found"
   | "runtime_start_failed"
@@ -24,20 +24,20 @@ export type DevSocketErrorCode =
   | "bridge_proxy_failed"
   | "internal_error";
 
-export interface DevSocketErrorPayload {
-  code: DevSocketErrorCode;
+export interface BridgeSocketErrorPayload {
+  code: BridgeSocketErrorCode;
   message: string;
   retryable: boolean;
   details?: Record<string, unknown>;
 }
 
-export interface DevSocketErrorResponse {
+export interface BridgeSocketErrorResponse {
   success: false;
   message: string;
-  error: DevSocketErrorPayload;
+  error: BridgeSocketErrorPayload;
 }
 
-export interface DevSocketBridgeCapabilities {
+export interface BridgeSocketBridgeCapabilities {
   commandHost: "host" | "helper" | "hybrid";
   hasRuntimeControl: boolean;
   canStartRuntime: boolean;
@@ -45,22 +45,22 @@ export interface DevSocketBridgeCapabilities {
   canStopRuntime: boolean;
   fallbackCommand: string;
   wsSubprotocol: string;
-  supportedProtocolVersions: DevSocketProtocolVersion[];
+  supportedProtocolVersions: BridgeSocketProtocolVersion[];
 }
 
-export interface DevSocketBridgeState {
-  protocolVersion: DevSocketProtocolVersion;
+export interface BridgeSocketBridgeState {
+  protocolVersion: BridgeSocketProtocolVersion;
   transportState:
     | "disconnected"
     | "bridge_detecting"
     | "runtime_starting"
     | "connected"
     | "degraded";
-  runtime: DevSocketRuntimeStatus;
-  capabilities: DevSocketBridgeCapabilities;
+  runtime: BridgeSocketRuntimeStatus;
+  capabilities: BridgeSocketBridgeCapabilities;
 }
 
-export interface DevSocketCommandRequest {
+export interface BridgeSocketCommandRequest {
   command:
     | "sync"
     | "login"
@@ -73,25 +73,25 @@ export interface DevSocketCommandRequest {
   payload?: Record<string, unknown>;
 }
 
-export interface DevSocketCommandResult {
+export interface BridgeSocketCommandResult {
   success: boolean;
   message?: string;
   operationId?: string;
   data?: Record<string, unknown>;
 }
 
-interface DevSocketBridgeEventBase {
-  protocolVersion: DevSocketProtocolVersion;
+interface BridgeSocketBridgeEventBase {
+  protocolVersion: BridgeSocketProtocolVersion;
   eventId: number;
   timestamp: number;
 }
 
-export type DevSocketBridgeEvent =
-  | (DevSocketBridgeEventBase & {
+export type BridgeSocketBridgeEvent =
+  | (BridgeSocketBridgeEventBase & {
       type: "runtime-status";
-      status: DevSocketRuntimeStatus;
+      status: BridgeSocketRuntimeStatus;
     })
-  | (DevSocketBridgeEventBase & {
+  | (BridgeSocketBridgeEventBase & {
       type: "runtime-error";
       error: string;
     });

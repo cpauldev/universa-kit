@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
-import { withDevSocketWebpackDevServer } from "../adapters/build/webpack.js";
+import { withBridgeSocketWebpackDevServer } from "../adapters/build/webpack.js";
 import { createSetupMiddlewaresDevServerFixture } from "./utils/adapter-server-fixtures.js";
 
 describe("webpack adapter", () => {
@@ -8,7 +8,7 @@ describe("webpack adapter", () => {
     const fixture = createSetupMiddlewaresDevServerFixture();
     let originalCalled = false;
 
-    const wrapped = withDevSocketWebpackDevServer(
+    const wrapped = withBridgeSocketWebpackDevServer(
       {
         setupMiddlewares: (middlewares: string[]) => {
           originalCalled = true;
@@ -35,7 +35,7 @@ describe("webpack adapter", () => {
   });
 
   it("no-ops gracefully when app is unavailable", () => {
-    const wrapped = withDevSocketWebpackDevServer({}, { autoStart: false });
+    const wrapped = withBridgeSocketWebpackDevServer({}, { autoStart: false });
     const middlewares = ["base"];
     const result =
       wrapped.setupMiddlewares?.(middlewares, {} as never) ?? middlewares;

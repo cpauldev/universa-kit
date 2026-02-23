@@ -1,13 +1,16 @@
 import { createServer } from "http";
 import { createServer as createNetServer } from "net";
 
-import { DevSocketBridge, type DevSocketBridgeOptions } from "./bridge.js";
+import {
+  BridgeSocketBridge,
+  type BridgeSocketBridgeOptions,
+} from "./bridge.js";
 import { writeJson } from "./http.js";
 
 export interface StandaloneBridgeServer {
   baseUrl: string;
   close: () => Promise<void>;
-  bridge: DevSocketBridge;
+  bridge: BridgeSocketBridge;
 }
 
 async function findAvailablePort(): Promise<number> {
@@ -34,10 +37,10 @@ async function findAvailablePort(): Promise<number> {
   });
 }
 
-export async function startStandaloneDevSocketBridgeServer(
-  options: DevSocketBridgeOptions = {},
+export async function startStandaloneBridgeSocketBridgeServer(
+  options: BridgeSocketBridgeOptions = {},
 ): Promise<StandaloneBridgeServer> {
-  const bridge = new DevSocketBridge(options);
+  const bridge = new BridgeSocketBridge(options);
   const port = await findAvailablePort();
   const sockets = new Set<import("net").Socket>();
   const server = createServer((req, res) => {

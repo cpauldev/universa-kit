@@ -1,47 +1,47 @@
 export {
-  createDevSocketBridge,
-  DevSocketBridge,
-  type DevSocketBridgeOptions,
+  createBridgeSocketBridge,
+  BridgeSocketBridge,
+  type BridgeSocketBridgeOptions,
 } from "./bridge/bridge.js";
 export {
-  DEVSOCKET_PROTOCOL_VERSION,
-  DEVSOCKET_WS_SUBPROTOCOL,
+  BRIDGESOCKET_PROTOCOL_VERSION,
+  BRIDGESOCKET_WS_SUBPROTOCOL,
 } from "./bridge/constants.js";
 export {
-  startStandaloneDevSocketBridgeServer,
+  startStandaloneBridgeSocketBridgeServer,
   type StandaloneBridgeServer,
 } from "./bridge/standalone.js";
 export {
-  createDevSocketUnplugin,
-  createDevSocketVitePlugin,
-  type DevSocketVitePluginOptions,
+  createBridgeSocketUnplugin,
+  createBridgeSocketVitePlugin,
+  type BridgeSocketVitePluginOptions,
 } from "./adapters/shared/plugin.js";
 export {
-  withDevSocketNext,
-  type DevSocketNextOptions,
+  withBridgeSocketNext,
+  type BridgeSocketNextOptions,
 } from "./adapters/framework/next.js";
 export {
-  createDevSocketAstroIntegration,
-  type AstroDevSocketOptions,
+  createBridgeSocketAstroIntegration,
+  type AstroBridgeSocketOptions,
 } from "./adapters/framework/astro.js";
 export {
-  createDevSocketAngularCliProxyConfig,
-  startDevSocketAngularCliBridge,
-  withDevSocketAngularCliProxyConfig,
-  type AngularCliDevSocketOptions,
-  type AngularCliDevSocketProxyConfig,
+  createBridgeSocketAngularCliProxyConfig,
+  startBridgeSocketAngularCliBridge,
+  withBridgeSocketAngularCliProxyConfig,
+  type AngularCliBridgeSocketOptions,
+  type AngularCliBridgeSocketProxyConfig,
   type AngularCliProxyTarget,
 } from "./adapters/framework/angular-cli.js";
 export {
-  createDevSocketNuxtModule,
-  type DevSocketNuxtOptions,
+  createBridgeSocketNuxtModule,
+  type BridgeSocketNuxtOptions,
 } from "./adapters/framework/nuxt.js";
 export {
-  attachDevSocketToBunServe,
-  withDevSocketBunServeFetch,
-  withDevSocketBunServeWebSocketHandlers,
+  attachBridgeSocketToBunServe,
+  withBridgeSocketBunServeFetch,
+  withBridgeSocketBunServeWebSocketHandlers,
   type BunBridgeHandle,
-  type BunDevSocketOptions,
+  type BunBridgeSocketOptions,
   type BunServeFetchHandler,
   type BunServeLikeServer,
   type BunServeLikeWebSocket,
@@ -49,48 +49,48 @@ export {
   type BunServeWebSocketHandlers,
 } from "./adapters/server/bun.js";
 export {
-  attachDevSocketToNodeServer,
+  attachBridgeSocketToNodeServer,
   createNodeBridgeLifecycle,
   type NodeBridgeHandle,
-  type NodeDevSocketOptions,
+  type NodeBridgeSocketOptions,
 } from "./adapters/server/node.js";
 export {
-  attachDevSocketToFastify,
+  attachBridgeSocketToFastify,
   type FastifyBridgeHandle,
-  type FastifyDevSocketOptions,
+  type FastifyBridgeSocketOptions,
   type FastifyLikeInstance,
   type FastifyLikeReply,
   type FastifyLikeRequest,
 } from "./adapters/server/fastify.js";
 export {
-  attachDevSocketToHonoNodeServer,
+  attachBridgeSocketToHonoNodeServer,
   createHonoBridgeLifecycle,
   type HonoBridgeHandle,
-  type HonoDevSocketOptions,
+  type HonoBridgeSocketOptions,
   type HonoNodeServer,
 } from "./adapters/server/hono.js";
 export {
   createWebpackBridgeLifecycle,
-  withDevSocketWebpackDevServer,
+  withBridgeSocketWebpackDevServer,
   type WebpackDevServerConfig,
   type WebpackDevServerLike,
-  type WebpackDevSocketOptions,
+  type WebpackBridgeSocketOptions,
   type WebpackLikeApp,
   type WebpackLikeHttpServer,
 } from "./adapters/build/webpack.js";
 export {
   createRsbuildBridgeLifecycle,
-  withDevSocketRsbuild,
+  withBridgeSocketRsbuild,
   type RsbuildConfig,
   type RsbuildDevServerLike,
-  type RsbuildDevSocketOptions,
+  type RsbuildBridgeSocketOptions,
 } from "./adapters/build/rsbuild.js";
 export {
   createRspackBridgeLifecycle,
-  withDevSocketRspack,
+  withBridgeSocketRspack,
   type RspackConfig,
   type RspackDevServerLike,
-  type RspackDevSocketOptions,
+  type RspackBridgeSocketOptions,
 } from "./adapters/build/rspack.js";
 export {
   RuntimeHelper,
@@ -98,24 +98,24 @@ export {
   type RuntimeControlSupport,
 } from "./runtime/runtime-helper.js";
 export {
-  DevSocketClientError,
-  createDevSocketClient,
-  type DevSocketBridgeHealth,
-  type DevSocketClient,
-  type DevSocketClientOptions,
-  type DevSocketEventsSubscriptionOptions,
-  type DevSocketWebSocketLike,
+  BridgeSocketClientError,
+  createBridgeSocketClient,
+  type BridgeSocketBridgeHealth,
+  type BridgeSocketClient,
+  type BridgeSocketClientOptions,
+  type BridgeSocketEventsSubscriptionOptions,
+  type BridgeSocketWebSocketLike,
 } from "./client/client.js";
 export type {
-  DevSocketBridgeCapabilities,
-  DevSocketBridgeEvent,
-  DevSocketBridgeState,
-  DevSocketCommandRequest,
-  DevSocketCommandResult,
-  DevSocketErrorCode,
-  DevSocketErrorPayload,
-  DevSocketErrorResponse,
-  DevSocketProtocolVersion,
-  DevSocketRuntimePhase,
-  DevSocketRuntimeStatus,
+  BridgeSocketBridgeCapabilities,
+  BridgeSocketBridgeEvent,
+  BridgeSocketBridgeState,
+  BridgeSocketCommandRequest,
+  BridgeSocketCommandResult,
+  BridgeSocketErrorCode,
+  BridgeSocketErrorPayload,
+  BridgeSocketErrorResponse,
+  BridgeSocketProtocolVersion,
+  BridgeSocketRuntimePhase,
+  BridgeSocketRuntimeStatus,
 } from "./types.js";

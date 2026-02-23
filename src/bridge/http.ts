@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "http";
 
-import type { DevSocketErrorPayload } from "../types.js";
+import type { BridgeSocketErrorPayload } from "../types.js";
 import { JSON_HEADERS } from "./constants.js";
 
 export function readRequestBody(req: IncomingMessage): Promise<Buffer> {
@@ -24,7 +24,7 @@ export function writeJson(
 export function writeError(
   res: ServerResponse,
   statusCode: number,
-  error: DevSocketErrorPayload,
+  error: BridgeSocketErrorPayload,
 ): void {
   writeJson(res, statusCode, {
     success: false,

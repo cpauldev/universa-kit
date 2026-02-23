@@ -1,7 +1,7 @@
-import type { BridgeLifecycle, DevSocketAdapterOptions } from "../shared/adapter-utils.js";
+import type { BridgeLifecycle, BridgeSocketAdapterOptions } from "../shared/adapter-utils.js";
 import {
   createBuildToolBridgeLifecycle,
-  withDevSocketBuildTool,
+  withBridgeSocketBuildTool,
   type BuildToolConfig,
   type BuildToolDevServerLike,
 } from "./create-build-adapter.js";
@@ -10,23 +10,24 @@ export type RsbuildDevServerLike = BuildToolDevServerLike;
 export type RsbuildConfig<TMiddlewares extends unknown[] = unknown[]> =
   BuildToolConfig<TMiddlewares>;
 
-export type RsbuildDevSocketOptions = DevSocketAdapterOptions;
+export type RsbuildBridgeSocketOptions = BridgeSocketAdapterOptions;
 
 export function createRsbuildBridgeLifecycle(
-  options: RsbuildDevSocketOptions = {},
+  options: RsbuildBridgeSocketOptions = {},
 ): BridgeLifecycle {
   return createBuildToolBridgeLifecycle(options);
 }
 
-export function withDevSocketRsbuild<
+export function withBridgeSocketRsbuild<
   TMiddlewares extends unknown[],
   TConfig extends RsbuildConfig<TMiddlewares>,
 >(
   config: TConfig,
-  options: RsbuildDevSocketOptions = {},
+  options: RsbuildBridgeSocketOptions = {},
 ): TConfig & RsbuildConfig<TMiddlewares> {
-  return withDevSocketBuildTool<TMiddlewares, RsbuildDevServerLike, TConfig>(
+  return withBridgeSocketBuildTool<TMiddlewares, RsbuildDevServerLike, TConfig>(
     config,
     options,
   );
 }
+

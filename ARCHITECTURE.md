@@ -1,16 +1,16 @@
-# DevSocket Architecture
+# BridgeSocket Architecture
 
 ## Document Meta
 
-- Purpose: Explain the implementation structure and data flow of DevSocket components.
-- Audience: Maintainers, contributors, and reviewers of DevSocket internals.
+- Purpose: Explain the implementation structure and data flow of BridgeSocket components.
+- Audience: Maintainers, contributors, and reviewers of BridgeSocket internals.
 - Status: Active
 - Version: aligned with protocol v1
 
 ## Overview
 
-DevSocket is a framework-agnostic integration layer for in-browser development tools.
-It provides a same-origin bridge (`/__devsocket/*`) mounted onto host development servers.
+BridgeSocket is a framework-agnostic integration layer for in-browser development tools.
+It provides a same-origin bridge (`/__bridgesocket/*`) mounted onto host development servers.
 
 ## Components
 
@@ -68,5 +68,5 @@ Adapters are responsible for attaching the bridge to the right middleware and HT
 - Configuration-aware capability reporting.
 - Deterministic error envelope.
 - Binary and multi-cookie proxy fidelity.
-- WebSocket subprotocol validation (`devsocket.v1+json`).
+- WebSocket subprotocol validation (`bridgesocket.v1+json`).
 - Singleton startup recovery for Next standalone bridge instances.

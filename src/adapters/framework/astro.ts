@@ -1,14 +1,14 @@
 import {
-  type DevSocketAdapterOptions,
+  type BridgeSocketAdapterOptions,
   type MiddlewareAdapterServer,
   createBridgeLifecycle,
   resolveAdapterOptions,
 } from "../shared/adapter-utils.js";
 
-export type AstroDevSocketOptions = DevSocketAdapterOptions;
+export type AstroBridgeSocketOptions = BridgeSocketAdapterOptions;
 
-export function createDevSocketAstroIntegration(
-  options: AstroDevSocketOptions = {},
+export function createBridgeSocketAstroIntegration(
+  options: AstroBridgeSocketOptions = {},
 ) {
   const resolvedOptions = resolveAdapterOptions(options);
   const lifecycle = createBridgeLifecycle(resolvedOptions);

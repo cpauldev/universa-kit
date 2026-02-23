@@ -1,7 +1,10 @@
 import { WebSocket, WebSocketServer } from "ws";
 
-import type { DevSocketBridgeEvent, DevSocketRuntimeStatus } from "../types.js";
-import { DEVSOCKET_PROTOCOL_VERSION } from "./constants.js";
+import type {
+  BridgeSocketBridgeEvent,
+  BridgeSocketRuntimeStatus,
+} from "../types.js";
+import { BRIDGESOCKET_PROTOCOL_VERSION } from "./constants.js";
 
 interface EventClientState {
   isAlive: boolean;
@@ -22,15 +25,15 @@ export class BridgeEventBus {
   }
 
   createRuntimeStatusEvent(
-    status: DevSocketRuntimeStatus,
-  ): DevSocketBridgeEvent {
+    status: BridgeSocketRuntimeStatus,
+  ): BridgeSocketBridgeEvent {
     return this.createBridgeEvent({
       type: "runtime-status",
       status,
     });
   }
 
-  emitRuntimeStatus(status: DevSocketRuntimeStatus): void {
+  emitRuntimeStatus(status: BridgeSocketRuntimeStatus): void {
     this.emitEvent(this.createRuntimeStatusEvent(status));
   }
 
@@ -52,7 +55,7 @@ export class BridgeEventBus {
     this.stopHeartbeatLoop();
   }
 
-  private emitEvent(event: DevSocketBridgeEvent): void {
+  private emitEvent(event: BridgeSocketBridgeEvent): void {
     const payload = JSON.stringify(event);
     for (const client of this.#eventClients) {
       if (client.readyState === WebSocket.OPEN) {
@@ -65,16 +68,16 @@ export class BridgeEventBus {
     event:
       | {
           type: "runtime-status";
-          status: DevSocketRuntimeStatus;
+          status: BridgeSocketRuntimeStatus;
         }
       | {
           type: "runtime-error";
           error: string;
         },
-  ): DevSocketBridgeEvent {
+  ): BridgeSocketBridgeEvent {
     return {
       ...event,
-      protocolVersion: DEVSOCKET_PROTOCOL_VERSION,
+      protocolVersion: BRIDGESOCKET_PROTOCOL_VERSION,
       eventId: this.#nextEventId++,
       timestamp: Date.now(),
     };

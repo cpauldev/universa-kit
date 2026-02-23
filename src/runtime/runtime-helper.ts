@@ -1,12 +1,12 @@
 import { type ResultPromise, execa } from "execa";
 import { createServer } from "net";
 
-import type { DevSocketRuntimeStatus } from "../types.js";
+import type { BridgeSocketRuntimeStatus } from "../types.js";
 
 const DEFAULT_START_TIMEOUT_MS = 15000;
 const DEFAULT_HEALTH_PATH = "/api/version";
 const DEFAULT_HOST = "127.0.0.1";
-const DEFAULT_RUNTIME_PORT_ENV_VAR = "DEVSOCKET_RUNTIME_PORT";
+const DEFAULT_RUNTIME_PORT_ENV_VAR = "BRIDGESOCKET_RUNTIME_PORT";
 
 export interface RuntimeHelperOptions {
   cwd?: string;
@@ -99,23 +99,23 @@ function resolveRuntimeCommand(options: RuntimeHelperOptions): {
 export class RuntimeHelper {
   #options: RuntimeHelperOptions;
   #child: ResultPromise | null = null;
-  #status: DevSocketRuntimeStatus = {
+  #status: BridgeSocketRuntimeStatus = {
     phase: "stopped",
     url: null,
     pid: null,
     startedAt: null,
     lastError: null,
   };
-  #startPromise: Promise<DevSocketRuntimeStatus> | null = null;
-  #stopPromise: Promise<DevSocketRuntimeStatus> | null = null;
-  #listeners = new Set<(status: DevSocketRuntimeStatus) => void>();
+  #startPromise: Promise<BridgeSocketRuntimeStatus> | null = null;
+  #stopPromise: Promise<BridgeSocketRuntimeStatus> | null = null;
+  #listeners = new Set<(status: BridgeSocketRuntimeStatus) => void>();
 
   constructor(options: RuntimeHelperOptions = {}) {
     this.#options = options;
   }
 
   onStatusChange(
-    listener: (status: DevSocketRuntimeStatus) => void,
+    listener: (status: BridgeSocketRuntimeStatus) => void,
   ): () => void {
     this.#listeners.add(listener);
     return () => {
@@ -123,7 +123,7 @@ export class RuntimeHelper {
     };
   }
 
-  getStatus(): DevSocketRuntimeStatus {
+  getStatus(): BridgeSocketRuntimeStatus {
     return { ...this.#status };
   }
 
@@ -145,14 +145,14 @@ export class RuntimeHelper {
     };
   }
 
-  async ensureStarted(): Promise<DevSocketRuntimeStatus> {
+  async ensureStarted(): Promise<BridgeSocketRuntimeStatus> {
     if (this.#status.phase === "running") {
       return this.getStatus();
     }
     return this.start();
   }
 
-  async start(): Promise<DevSocketRuntimeStatus> {
+  async start(): Promise<BridgeSocketRuntimeStatus> {
     if (this.#status.phase === "running") {
       return this.getStatus();
     }
@@ -265,12 +265,12 @@ export class RuntimeHelper {
     }
   }
 
-  async restart(): Promise<DevSocketRuntimeStatus> {
+  async restart(): Promise<BridgeSocketRuntimeStatus> {
     await this.stop();
     return this.start();
   }
 
-  async stop(): Promise<DevSocketRuntimeStatus> {
+  async stop(): Promise<BridgeSocketRuntimeStatus> {
     if (this.#status.phase === "stopped" || !this.#child) {
       this.setStatus({
         phase: "stopped",
@@ -330,7 +330,7 @@ export class RuntimeHelper {
     }
   }
 
-  private setStatus(next: DevSocketRuntimeStatus): void {
+  private setStatus(next: BridgeSocketRuntimeStatus): void {
     this.#status = { ...next };
     for (const listener of this.#listeners) {
       listener(this.getStatus());

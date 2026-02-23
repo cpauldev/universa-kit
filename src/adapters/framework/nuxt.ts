@@ -1,19 +1,21 @@
 import {
-  type DevSocketAdapterOptions,
+  type BridgeSocketAdapterOptions,
   appendPlugin,
   resolveAdapterOptions,
 } from "../shared/adapter-utils.js";
-import { createDevSocketVitePlugin } from "../shared/plugin.js";
+import { createBridgeSocketVitePlugin } from "../shared/plugin.js";
 
-export type DevSocketNuxtOptions = DevSocketAdapterOptions;
+export type BridgeSocketNuxtOptions = BridgeSocketAdapterOptions;
 
-export function createDevSocketNuxtModule(options: DevSocketNuxtOptions = {}) {
+export function createBridgeSocketNuxtModule(
+  options: BridgeSocketNuxtOptions = {},
+) {
   const resolvedOptions = resolveAdapterOptions(options);
 
   return {
     meta: {
       name: resolvedOptions.adapterName,
-      configKey: "devSocket",
+      configKey: "bridgeSocket",
     },
     setup: (_moduleOptions: unknown, nuxt: Record<string, unknown>) => {
       const nuxtOptions = (nuxt.options || {}) as { dev?: boolean };
@@ -27,7 +29,7 @@ export function createDevSocketNuxtModule(options: DevSocketNuxtOptions = {}) {
       hook("vite:extendConfig", ((config: { plugins?: unknown[] }) => {
         config.plugins = appendPlugin(
           config.plugins,
-          createDevSocketVitePlugin(resolvedOptions),
+          createBridgeSocketVitePlugin(resolvedOptions),
         );
       }) as (...args: unknown[]) => void);
     },

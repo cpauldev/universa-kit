@@ -1,11 +1,11 @@
 import type { IncomingMessage, ServerResponse } from "http";
 
 import {
-  type DevSocketBridge,
-  createDevSocketBridge,
+  type BridgeSocketBridge,
+  createBridgeSocketBridge,
 } from "../../bridge/bridge.js";
 import {
-  type DevSocketAdapterOptions,
+  type BridgeSocketAdapterOptions,
   resolveAdapterOptions,
 } from "../shared/adapter-utils.js";
 
@@ -35,22 +35,22 @@ export interface FastifyLikeInstance {
 }
 
 export interface FastifyBridgeHandle {
-  bridge: DevSocketBridge;
+  bridge: BridgeSocketBridge;
   close: () => Promise<void>;
 }
 
-export type FastifyDevSocketOptions = DevSocketAdapterOptions;
+export type FastifyBridgeSocketOptions = BridgeSocketAdapterOptions;
 
 function toError(value: unknown): Error {
   if (value instanceof Error) return value;
   return new Error(String(value));
 }
 
-export async function attachDevSocketToFastify(
+export async function attachBridgeSocketToFastify(
   fastify: FastifyLikeInstance,
-  options: FastifyDevSocketOptions = {},
+  options: FastifyBridgeSocketOptions = {},
 ): Promise<FastifyBridgeHandle> {
-  const bridge = await createDevSocketBridge(resolveAdapterOptions(options));
+  const bridge = await createBridgeSocketBridge(resolveAdapterOptions(options));
 
   fastify.addHook(
     "onRequest",

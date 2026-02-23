@@ -1,14 +1,14 @@
 import { afterEach, describe, expect, it } from "bun:test";
 
 import {
-  createDevSocketAngularCliProxyConfig,
-  withDevSocketAngularCliProxyConfig,
+  createBridgeSocketAngularCliProxyConfig,
+  withBridgeSocketAngularCliProxyConfig,
 } from "../adapters/framework/angular-cli.js";
-import { createDevSocketAstroIntegration } from "../adapters/framework/astro.js";
-import { withDevSocketNext } from "../adapters/framework/next.js";
-import { createDevSocketNuxtModule } from "../adapters/framework/nuxt.js";
-import { DEVSOCKET_NEXT_BRIDGE_GLOBAL_KEY } from "../adapters/shared/adapter-utils.js";
-import { createDevSocketVitePlugin } from "../adapters/shared/plugin.js";
+import { createBridgeSocketAstroIntegration } from "../adapters/framework/astro.js";
+import { withBridgeSocketNext } from "../adapters/framework/next.js";
+import { createBridgeSocketNuxtModule } from "../adapters/framework/nuxt.js";
+import { BRIDGESOCKET_NEXT_BRIDGE_GLOBAL_KEY } from "../adapters/shared/adapter-utils.js";
+import { createBridgeSocketVitePlugin } from "../adapters/shared/plugin.js";
 import { createMiddlewareAdapterServerFixture } from "./utils/adapter-server-fixtures.js";
 
 const originalNodeEnv = process.env.NODE_ENV;
@@ -20,7 +20,7 @@ async function clearBridgeGlobals(): Promise<void> {
   const cleanupTasks: Promise<void>[] = [];
 
   for (const key of Object.keys(bridgeGlobal)) {
-    if (key.startsWith(DEVSOCKET_NEXT_BRIDGE_GLOBAL_KEY)) {
+    if (key.startsWith(BRIDGESOCKET_NEXT_BRIDGE_GLOBAL_KEY)) {
       const bridgePromise = bridgeGlobal[key] as
         | Promise<{ close?: () => Promise<void> }>
         | undefined;
@@ -48,10 +48,10 @@ afterEach(async () => {
   await clearBridgeGlobals();
 });
 
-describe("devsocket adapters", () => {
-  it("withDevSocketNext injects bridge rewrites first", async () => {
+describe("bridgesocket adapters", () => {
+  it("withBridgeSocketNext injects bridge rewrites first", async () => {
     process.env.NODE_ENV = "development";
-    const testBridgeKey = `${DEVSOCKET_NEXT_BRIDGE_GLOBAL_KEY}:test-adapters`;
+    const testBridgeKey = `${BRIDGESOCKET_NEXT_BRIDGE_GLOBAL_KEY}:test-adapters`;
     const bridgeGlobal = globalThis as typeof globalThis & {
       [key: string]: unknown;
     };
@@ -62,7 +62,7 @@ describe("devsocket adapters", () => {
       close: async () => undefined,
     });
 
-    const config = withDevSocketNext(
+    const config = withBridgeSocketNext(
       {
         rewrites: async () => [
           {
@@ -87,8 +87,8 @@ describe("devsocket adapters", () => {
       : rewrites;
 
     expect(normalized.beforeFiles[0]).toEqual({
-      source: "/__devsocket/:path*",
-      destination: "http://127.0.0.1:41234/__devsocket/:path*",
+      source: "/__bridgesocket/:path*",
+      destination: "http://127.0.0.1:41234/__bridgesocket/:path*",
     });
     expect(normalized.beforeFiles[1]).toEqual({
       source: "/docs/:path*",
@@ -98,21 +98,21 @@ describe("devsocket adapters", () => {
     delete bridgeGlobal[testBridgeKey];
   });
 
-  it("withDevSocketNext is a no-op in production", () => {
+  it("withBridgeSocketNext is a no-op in production", () => {
     process.env.NODE_ENV = "production";
     const config = { trailingSlash: true };
-    const wrapped = withDevSocketNext(config);
+    const wrapped = withBridgeSocketNext(config);
     expect(wrapped).toBe(config);
   });
 
-  it("withDevSocketNext creates isolated bridge instances by default", async () => {
+  it("withBridgeSocketNext creates isolated bridge instances by default", async () => {
     process.env.NODE_ENV = "development";
     const passthroughRule = { source: "/noop/:path*", destination: "/noop" };
 
-    const first = withDevSocketNext({
+    const first = withBridgeSocketNext({
       rewrites: async () => [passthroughRule],
     });
-    const second = withDevSocketNext({
+    const second = withBridgeSocketNext({
       rewrites: async () => [passthroughRule],
     });
 
@@ -137,8 +137,8 @@ describe("devsocket adapters", () => {
     expect(firstDestination).not.toBe(secondDestination);
   });
 
-  it("createDevSocketNuxtModule injects plugin hook only in dev", () => {
-    const module = createDevSocketNuxtModule();
+  it("createBridgeSocketNuxtModule injects plugin hook only in dev", () => {
+    const module = createBridgeSocketNuxtModule();
     const hooks: Record<string, (...args: unknown[]) => void> = {};
     module.setup(
       {},
@@ -170,8 +170,10 @@ describe("devsocket adapters", () => {
     expect(prodHooks["vite:extendConfig"]).toBeUndefined();
   });
 
-  it("createDevSocketAstroIntegration wires setup and teardown hooks", async () => {
-    const integration = createDevSocketAstroIntegration({ autoStart: false });
+  it("createBridgeSocketAstroIntegration wires setup and teardown hooks", async () => {
+    const integration = createBridgeSocketAstroIntegration({
+      autoStart: false,
+    });
     const fixture = createMiddlewareAdapterServerFixture();
 
     await (
@@ -189,8 +191,8 @@ describe("devsocket adapters", () => {
     await (integration.hooks["astro:server:done"] as () => Promise<void>)();
   });
 
-  it("createDevSocketAngularCliProxyConfig returns proxy rules for bridge routes", async () => {
-    const testBridgeKey = `${DEVSOCKET_NEXT_BRIDGE_GLOBAL_KEY}:angular-cli:test`;
+  it("createBridgeSocketAngularCliProxyConfig returns proxy rules for bridge routes", async () => {
+    const testBridgeKey = `${BRIDGESOCKET_NEXT_BRIDGE_GLOBAL_KEY}:angular-cli:test`;
     const bridgeGlobal = globalThis as typeof globalThis & {
       [key: string]: unknown;
     };
@@ -201,18 +203,18 @@ describe("devsocket adapters", () => {
       close: async () => undefined,
     });
 
-    const proxyConfig = await createDevSocketAngularCliProxyConfig({
+    const proxyConfig = await createBridgeSocketAngularCliProxyConfig({
       angularCliBridgeGlobalKey: testBridgeKey,
     });
     expect(proxyConfig).toEqual({
-      "/__devsocket": {
+      "/__bridgesocket": {
         target: "http://127.0.0.1:43210",
         secure: false,
         changeOrigin: false,
         ws: true,
         logLevel: "warn",
       },
-      "/__devsocket/**": {
+      "/__bridgesocket/**": {
         target: "http://127.0.0.1:43210",
         secure: false,
         changeOrigin: false,
@@ -221,7 +223,7 @@ describe("devsocket adapters", () => {
       },
     });
 
-    const mergedProxyConfig = await withDevSocketAngularCliProxyConfig(
+    const mergedProxyConfig = await withBridgeSocketAngularCliProxyConfig(
       {
         "/api": {
           target: "http://127.0.0.1:5000",
@@ -237,19 +239,19 @@ describe("devsocket adapters", () => {
     );
     expect(Object.keys(mergedProxyConfig)).toEqual([
       "/api",
-      "/__devsocket",
-      "/__devsocket/**",
+      "/__bridgesocket",
+      "/__bridgesocket/**",
     ]);
 
     delete bridgeGlobal[testBridgeKey];
   });
 
-  it("createDevSocketVitePlugin configures Vite middleware bridge", async () => {
-    const plugin = createDevSocketVitePlugin({ autoStart: false });
+  it("createBridgeSocketVitePlugin configures Vite middleware bridge", async () => {
+    const plugin = createBridgeSocketVitePlugin({ autoStart: false });
     const pluginObject = Array.isArray(plugin) ? plugin[0] : plugin;
     const fixture = createMiddlewareAdapterServerFixture();
 
-    expect(pluginObject?.name).toBe("devsocket-bridge");
+    expect(pluginObject?.name).toBe("bridgesocket-bridge");
     expect(pluginObject?.enforce).toBe("pre");
 
     await pluginObject?.configureServer?.(fixture.server as never);

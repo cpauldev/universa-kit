@@ -1,29 +1,29 @@
-# DevSocket 🪼
+# BridgeSocket 🪼
 
 <p align="center">
-  <img src="assets/jellyfishy.png" alt="DevSocket jellyfish mascot" width="80" style="vertical-align: middle;" />
-  <img src="assets/devsocket-logo.png" alt="DevSocket logo" width="420" style="vertical-align: middle;" />
+  <img src="assets/jellyfishy.png" alt="BridgeSocket jellyfish mascot" width="80" style="vertical-align: middle;" />
+  <img src="assets/bridgesocket-logo.png" alt="BridgeSocket logo" width="420" style="vertical-align: middle;" />
 </p>
 
 <p align="center">
-  <a href="https://github.com/cpauldev/devsocket/actions/workflows/ci.yml"><img alt="build" src="https://img.shields.io/github/actions/workflow/status/cpauldev/devsocket/ci.yml?branch=main&style=for-the-badge&label=build" height="28" style="vertical-align: middle;" /></a>
-  <a href="https://github.com/cpauldev/devsocket/releases"><img alt="release" src="https://img.shields.io/github/v/release/cpauldev/devsocket?style=for-the-badge&label=release" height="28" style="vertical-align: middle;" /></a>
+  <a href="https://github.com/cpauldev/bridgesocket/actions/workflows/ci.yml"><img alt="build" src="https://img.shields.io/github/actions/workflow/status/cpauldev/bridgesocket/ci.yml?branch=main&style=for-the-badge&label=build" height="28" style="vertical-align: middle;" /></a>
+  <a href="https://github.com/cpauldev/bridgesocket/releases"><img alt="release" src="https://img.shields.io/github/v/release/cpauldev/bridgesocket?style=for-the-badge&label=release" height="28" style="vertical-align: middle;" /></a>
   <a href="LICENSE"><img alt="license" src="https://img.shields.io/badge/license-MIT-blue?style=for-the-badge" height="28" style="vertical-align: middle;" /></a>
 </p>
 
-DevSocket is a universal bridge for local development tools. It mounts a same-origin control plane (`/__devsocket/*`) on your host dev server so browser UIs and local clients can read state, stream events, control runtime lifecycle, and proxy runtime APIs consistently across frameworks.
+BridgeSocket is a universal bridge for local development tools. It mounts a same-origin control plane (`/__bridgesocket/*`) on your host dev server so browser UIs and local clients can read state, stream events, control runtime lifecycle, and proxy runtime APIs consistently across frameworks.
 
 ## Who Should Use This
 
-| You are...                                                | Should you use DevSocket directly? | Why                                                                                          |
-| --------------------------------------------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------- |
-| Building a developer tool (overlay/sidebar/control panel) | Yes                                | DevSocket provides framework adapters, bridge routes, runtime control, and event streaming.  |
-| Building custom internal developer tooling                | Yes                                | Use DevSocket directly to mount same-origin bridge APIs and optional runtime control in dev. |
-| Using a tool that already ships DevSocket integration     | No                                 | Follow that tool's setup instructions; the integration is already handled.                   |
+| You are...                                                | Should you use BridgeSocket directly? | Why                                                                                             |
+| --------------------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Building a developer tool (overlay/sidebar/control panel) | Yes                                   | BridgeSocket provides framework adapters, bridge routes, runtime control, and event streaming.  |
+| Building custom internal developer tooling                | Yes                                   | Use BridgeSocket directly to mount same-origin bridge APIs and optional runtime control in dev. |
+| Using a tool that already ships BridgeSocket integration  | No                                    | Follow that tool's setup instructions; the integration is already handled.                      |
 
 ## Table Of Contents
 
-- [Why DevSocket Matters](#why-devsocket-matters)
+- [Why BridgeSocket Matters](#why-bridgesocket-matters)
 - [What It Provides](#what-it-provides)
 - [Common Use Cases](#common-use-cases)
 - [Install](#install)
@@ -33,34 +33,34 @@ DevSocket is a universal bridge for local development tools. It mounts a same-or
 - [Configuration](#configuration)
 - [Bridge Routes](#bridge-routes)
 - [Bridge Events](#bridge-events)
-- [Client API (`devsocket/client`)](#client-api-devsocketclient)
+- [Client API (`bridgesocket/client`)](#client-api-bridgesocketclient)
 - [Adapter Examples](#adapter-examples)
 - [Next.js Bridge Keys](#nextjs-bridge-keys)
 - [Compatibility](#compatibility)
 - [Documentation](#documentation)
 - [Packaging](#packaging)
 
-## Why DevSocket Matters
+## Why BridgeSocket Matters
 
 If you build a local dev tool that appears next to an app (overlay, sidebar, control panel), framework-specific integration becomes expensive fast. Frameworks, servers, and build tools expose different hooks, so teams either reimplement the same integration layer repeatedly, support one stack only, or skip the tool entirely.
 
-DevSocket gives you one shared adapter and bridge layer so you can focus on product behavior and UX while DevSocket handles integration and transport.
+BridgeSocket gives you one shared adapter and bridge layer so you can focus on product behavior and UX while BridgeSocket handles integration and transport.
 
-DevSocket primarily targets browser-based dev UIs, but the same bridge also works for non-UI local clients such as scripts and CLIs.
+BridgeSocket primarily targets browser-based dev UIs, but the same bridge also works for non-UI local clients such as scripts and CLIs.
 
 ## What It Provides
 
-- same-origin bridge routes (default prefix: `/__devsocket`)
+- same-origin bridge routes (default prefix: `/__bridgesocket`)
 - runtime lifecycle control (`start`, `restart` require `command`; `stop` is idempotent)
 - runtime status state for UI and automation
 - versioned bridge contract (`protocolVersion: "1"`)
-- websocket event stream (`/__devsocket/events`) with ordered event IDs
-- API proxying from host origin to runtime origin (`/__devsocket/api/*`)
+- websocket event stream (`/__bridgesocket/events`) with ordered event IDs
+- API proxying from host origin to runtime origin (`/__bridgesocket/api/*`)
 - binary proxy fidelity and multi-value `Set-Cookie` forwarding
-- typed client helpers via `devsocket/client`
+- typed client helpers via `bridgesocket/client`
 - framework/server/build-tool adapters
 
-DevSocket does not include a first-party UI, app scaffolding, or hosted cloud services.
+BridgeSocket does not include a first-party UI, app scaffolding, or hosted cloud services.
 
 ## Common Use Cases
 
@@ -74,31 +74,31 @@ DevSocket does not include a first-party UI, app scaffolding, or hosted cloud se
 ## Install
 
 ```bash
-npm i devsocket
+npm i bridgesocket
 ```
 
 ```bash
-pnpm add devsocket
+pnpm add bridgesocket
 ```
 
 ```bash
-yarn add devsocket
+yarn add bridgesocket
 ```
 
 ```bash
-bun add devsocket
+bun add bridgesocket
 ```
 
 ## Quick Start
 
 ```ts
 // vite.config.ts
-import { createDevSocketVitePlugin } from "devsocket/vite";
+import { createBridgeSocketVitePlugin } from "bridgesocket/vite";
 import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [
-    createDevSocketVitePlugin({
+    createBridgeSocketVitePlugin({
       command: "node",
       args: ["./scripts/dev-runtime.js"],
     }),
@@ -110,102 +110,102 @@ If your package wraps this integration, your end users typically only install yo
 
 ## Integration Surfaces
 
-| Host setup                                                                                        | Import path             | Use when                                         |
-| ------------------------------------------------------------------------------------------------- | ----------------------- | ------------------------------------------------ |
-| Vite-based framework (Vue, SvelteKit, TanStack Start, Remix, React Router, Angular Vite pipeline) | `devsocket/vite`        | You want one Vite plugin path.                   |
-| Next.js                                                                                           | `devsocket/next`        | You want a Next config wrapper and rewrite flow. |
-| Nuxt                                                                                              | `devsocket/nuxt`        | You want a Nuxt module integration.              |
-| Astro                                                                                             | `devsocket/astro`       | You want Astro integration hooks.                |
-| Angular CLI (non-Vite pipeline)                                                                   | `devsocket/angular/cli` | You need generated proxy config for `ng serve`.  |
-| `Bun.serve`                                                                                       | `devsocket/bun`         | You need Bun-native fetch/websocket handlers.    |
-| Node middleware + HTTP server                                                                     | `devsocket/node`        | You want direct server attachment.               |
-| Fastify                                                                                           | `devsocket/fastify`     | You want Fastify hook-based integration.         |
-| Hono on Node server                                                                               | `devsocket/hono`        | You want Hono Node server attachment.            |
-| webpack-dev-server                                                                                | `devsocket/webpack`     | You want build-tool level middleware wiring.     |
-| Rsbuild                                                                                           | `devsocket/rsbuild`     | You want build-tool level middleware wiring.     |
-| Rspack                                                                                            | `devsocket/rspack`      | You want build-tool level middleware wiring.     |
+| Host setup                                                                                        | Import path                | Use when                                         |
+| ------------------------------------------------------------------------------------------------- | -------------------------- | ------------------------------------------------ |
+| Vite-based framework (Vue, SvelteKit, TanStack Start, Remix, React Router, Angular Vite pipeline) | `bridgesocket/vite`        | You want one Vite plugin path.                   |
+| Next.js                                                                                           | `bridgesocket/next`        | You want a Next config wrapper and rewrite flow. |
+| Nuxt                                                                                              | `bridgesocket/nuxt`        | You want a Nuxt module integration.              |
+| Astro                                                                                             | `bridgesocket/astro`       | You want Astro integration hooks.                |
+| Angular CLI (non-Vite pipeline)                                                                   | `bridgesocket/angular/cli` | You need generated proxy config for `ng serve`.  |
+| `Bun.serve`                                                                                       | `bridgesocket/bun`         | You need Bun-native fetch/websocket handlers.    |
+| Node middleware + HTTP server                                                                     | `bridgesocket/node`        | You want direct server attachment.               |
+| Fastify                                                                                           | `bridgesocket/fastify`     | You want Fastify hook-based integration.         |
+| Hono on Node server                                                                               | `bridgesocket/hono`        | You want Hono Node server attachment.            |
+| webpack-dev-server                                                                                | `bridgesocket/webpack`     | You want build-tool level middleware wiring.     |
+| Rsbuild                                                                                           | `bridgesocket/rsbuild`     | You want build-tool level middleware wiring.     |
+| Rspack                                                                                            | `bridgesocket/rspack`      | You want build-tool level middleware wiring.     |
 
 Runtime note:
 
-- `devsocket/node` refers to a Node-style server interface, not Node-only runtime.
-- for `Bun.serve`, use `devsocket/bun`.
-- DevSocket supports Node and Bun runtimes.
+- `bridgesocket/node` refers to a Node-style server interface, not Node-only runtime.
+- for `Bun.serve`, use `bridgesocket/bun`.
+- BridgeSocket supports Node and Bun runtimes.
 
 ## API Naming Patterns
 
-| Pattern              | Meaning                                                     |
-| -------------------- | ----------------------------------------------------------- |
-| `createDevSocket*`   | Create a plugin/module/integration value.                   |
-| `withDevSocket*`     | Wrap and return an updated config object.                   |
-| `attachDevSocketTo*` | Imperatively attach DevSocket to a running server instance. |
-| `startDevSocket*`    | Start a standalone bridge/helper and return a handle.       |
+| Pattern                 | Meaning                                                        |
+| ----------------------- | -------------------------------------------------------------- |
+| `createBridgeSocket*`   | Create a plugin/module/integration value.                      |
+| `withBridgeSocket*`     | Wrap and return an updated config object.                      |
+| `attachBridgeSocketTo*` | Imperatively attach BridgeSocket to a running server instance. |
+| `startBridgeSocket*`    | Start a standalone bridge/helper and return a handle.          |
 
 Common APIs:
 
-| API                                    | Import path             |
-| -------------------------------------- | ----------------------- |
-| `createDevSocketVitePlugin`            | `devsocket/vite`        |
-| `createDevSocketUnplugin`              | `devsocket`             |
-| `withDevSocketNext`                    | `devsocket/next`        |
-| `createDevSocketAstroIntegration`      | `devsocket/astro`       |
-| `createDevSocketNuxtModule`            | `devsocket/nuxt`        |
-| `createDevSocketAngularCliProxyConfig` | `devsocket/angular/cli` |
-| `startDevSocketAngularCliBridge`       | `devsocket/angular/cli` |
-| `withDevSocketAngularCliProxyConfig`   | `devsocket/angular/cli` |
-| `attachDevSocketToBunServe`            | `devsocket/bun`         |
-| `attachDevSocketToNodeServer`          | `devsocket/node`        |
-| `attachDevSocketToFastify`             | `devsocket/fastify`     |
-| `attachDevSocketToHonoNodeServer`      | `devsocket/hono`        |
-| `withDevSocketWebpackDevServer`        | `devsocket/webpack`     |
-| `withDevSocketRsbuild`                 | `devsocket/rsbuild`     |
-| `withDevSocketRspack`                  | `devsocket/rspack`      |
+| API                                       | Import path                |
+| ----------------------------------------- | -------------------------- |
+| `createBridgeSocketVitePlugin`            | `bridgesocket/vite`        |
+| `createBridgeSocketUnplugin`              | `bridgesocket`             |
+| `withBridgeSocketNext`                    | `bridgesocket/next`        |
+| `createBridgeSocketAstroIntegration`      | `bridgesocket/astro`       |
+| `createBridgeSocketNuxtModule`            | `bridgesocket/nuxt`        |
+| `createBridgeSocketAngularCliProxyConfig` | `bridgesocket/angular/cli` |
+| `startBridgeSocketAngularCliBridge`       | `bridgesocket/angular/cli` |
+| `withBridgeSocketAngularCliProxyConfig`   | `bridgesocket/angular/cli` |
+| `attachBridgeSocketToBunServe`            | `bridgesocket/bun`         |
+| `attachBridgeSocketToNodeServer`          | `bridgesocket/node`        |
+| `attachBridgeSocketToFastify`             | `bridgesocket/fastify`     |
+| `attachBridgeSocketToHonoNodeServer`      | `bridgesocket/hono`        |
+| `withBridgeSocketWebpackDevServer`        | `bridgesocket/webpack`     |
+| `withBridgeSocketRsbuild`                 | `bridgesocket/rsbuild`     |
+| `withBridgeSocketRspack`                  | `bridgesocket/rspack`      |
 
 ## Configuration
 
-All adapters accept `DevSocketAdapterOptions`, which extends bridge/runtime options.
+All adapters accept `BridgeSocketAdapterOptions`, which extends bridge/runtime options.
 
 Core options:
 
-| Option                     | Type                                  | Default                    | Notes                                          |
-| -------------------------- | ------------------------------------- | -------------------------- | ---------------------------------------------- |
-| `autoStart`                | `boolean`                             | `true`                     | Auto-start runtime on state/proxy/event paths. |
-| `bridgePathPrefix`         | `string`                              | `"/__devsocket"`           | Route prefix for bridge endpoints.             |
-| `fallbackCommand`          | `string`                              | `"devsocket dev"`          | Returned in error payloads for recovery UX.    |
-| `command`                  | `string`                              | none                       | Required for managed runtime lifecycle.        |
-| `args`                     | `string[]`                            | `[]`                       | Runtime process args.                          |
-| `cwd`                      | `string`                              | `process.cwd()`            | Runtime working directory.                     |
-| `env`                      | `Record<string, string \| undefined>` | none                       | Extra runtime env vars.                        |
-| `host`                     | `string`                              | `"127.0.0.1"`              | Runtime host binding.                          |
-| `healthPath`               | `string`                              | `"/api/version"`           | Health probe path used after spawn.            |
-| `startTimeoutMs`           | `number`                              | `15000`                    | Runtime health timeout.                        |
-| `runtimePortEnvVar`        | `string`                              | `"DEVSOCKET_RUNTIME_PORT"` | Env var populated with allocated port.         |
-| `eventHeartbeatIntervalMs` | `number`                              | `30000`                    | Ping interval for stale WS client cleanup.     |
+| Option                     | Type                                  | Default                       | Notes                                          |
+| -------------------------- | ------------------------------------- | ----------------------------- | ---------------------------------------------- |
+| `autoStart`                | `boolean`                             | `true`                        | Auto-start runtime on state/proxy/event paths. |
+| `bridgePathPrefix`         | `string`                              | `"/__bridgesocket"`           | Route prefix for bridge endpoints.             |
+| `fallbackCommand`          | `string`                              | `"bridgesocket dev"`          | Returned in error payloads for recovery UX.    |
+| `command`                  | `string`                              | none                          | Required for managed runtime lifecycle.        |
+| `args`                     | `string[]`                            | `[]`                          | Runtime process args.                          |
+| `cwd`                      | `string`                              | `process.cwd()`               | Runtime working directory.                     |
+| `env`                      | `Record<string, string \| undefined>` | none                          | Extra runtime env vars.                        |
+| `host`                     | `string`                              | `"127.0.0.1"`                 | Runtime host binding.                          |
+| `healthPath`               | `string`                              | `"/api/version"`              | Health probe path used after spawn.            |
+| `startTimeoutMs`           | `number`                              | `15000`                       | Runtime health timeout.                        |
+| `runtimePortEnvVar`        | `string`                              | `"BRIDGESOCKET_RUNTIME_PORT"` | Env var populated with allocated port.         |
+| `eventHeartbeatIntervalMs` | `number`                              | `30000`                       | Ping interval for stale WS client cleanup.     |
 
 Adapter-specific options:
 
 | Option                | Type     | Default                        | Notes                                              |
 | --------------------- | -------- | ------------------------------ | -------------------------------------------------- |
-| `adapterName`         | `string` | `"devsocket-bridge"`           | Plugin/module name where applicable.               |
-| `rewriteSource`       | `string` | `"/__devsocket/:path*"`        | Rewrite pattern used by Next wrapper.              |
+| `adapterName`         | `string` | `"bridgesocket-bridge"`        | Plugin/module name where applicable.               |
+| `rewriteSource`       | `string` | `"/__bridgesocket/:path*"`     | Rewrite pattern used by Next wrapper.              |
 | `nextBridgeGlobalKey` | `string` | auto-generated in Next wrapper | Override for deterministic Next standalone keying. |
 
 ## Bridge Routes
 
-With default prefix `/__devsocket`:
+With default prefix `/__bridgesocket`:
 
-- `GET /__devsocket/health`
-- `GET /__devsocket/state`
-- `GET /__devsocket/runtime/status`
-- `POST /__devsocket/runtime/start`
-- `POST /__devsocket/runtime/restart`
-- `POST /__devsocket/runtime/stop`
-- `WS /__devsocket/events`
-- `ANY /__devsocket/api/*` (proxied to runtime as `/api/*`)
+- `GET /__bridgesocket/health`
+- `GET /__bridgesocket/state`
+- `GET /__bridgesocket/runtime/status`
+- `POST /__bridgesocket/runtime/start`
+- `POST /__bridgesocket/runtime/restart`
+- `POST /__bridgesocket/runtime/stop`
+- `WS /__bridgesocket/events`
+- `ANY /__bridgesocket/api/*` (proxied to runtime as `/api/*`)
 
 Notes:
 
 - `GET /state` may auto-start runtime when `autoStart` is enabled.
-- bridge routes are query-safe (for example `GET /__devsocket/state?source=ui`).
+- bridge routes are query-safe (for example `GET /__bridgesocket/state?source=ui`).
 - `POST /runtime/stop` disables auto-start until `start` or `restart` is called.
 - bridge-generated errors use envelope shape: `{ success: false, message, error: { code, message, retryable, details? } }`.
 - proxied `/api/*` responses pass through upstream status/body/headers and are not envelope-wrapped by default.
@@ -225,18 +225,18 @@ Bridge-emitted events include:
 
 WebSocket subprotocol:
 
-- supported: `devsocket.v1+json`
-- if a client sends `Sec-WebSocket-Protocol`, the offered list must include `devsocket.v1+json`; otherwise the bridge rejects with `426`
-- when accepted, the bridge negotiates `devsocket.v1+json`
+- supported: `bridgesocket.v1+json`
+- if a client sends `Sec-WebSocket-Protocol`, the offered list must include `bridgesocket.v1+json`; otherwise the bridge rejects with `426`
+- when accepted, the bridge negotiates `bridgesocket.v1+json`
 
-Type source: `src/types.ts` (`DevSocketBridgeEvent`).
+Type source: `src/types.ts` (`BridgeSocketBridgeEvent`).
 
-## Client API (`devsocket/client`)
+## Client API (`bridgesocket/client`)
 
 ```ts
-import { createDevSocketClient } from "devsocket/client";
+import { createBridgeSocketClient } from "bridgesocket/client";
 
-const client = createDevSocketClient({
+const client = createBridgeSocketClient({
   baseUrl: "http://127.0.0.1:3000",
 });
 
@@ -259,9 +259,9 @@ In Node environments, pass a WebSocket implementation with `webSocketFactory` wh
 
 ```ts
 // next.config.ts
-import { withDevSocketNext } from "devsocket/next";
+import { withBridgeSocketNext } from "bridgesocket/next";
 
-export default withDevSocketNext(
+export default withBridgeSocketNext(
   { reactStrictMode: true },
   {
     command: "node",
@@ -275,10 +275,10 @@ export default withDevSocketNext(
 ```ts
 // astro.config.ts
 import { defineConfig } from "astro/config";
-import { createDevSocketAstroIntegration } from "devsocket/astro";
+import { createBridgeSocketAstroIntegration } from "bridgesocket/astro";
 
 export default defineConfig({
-  integrations: [createDevSocketAstroIntegration()],
+  integrations: [createBridgeSocketAstroIntegration()],
 });
 ```
 
@@ -286,24 +286,24 @@ export default defineConfig({
 
 ```ts
 // nuxt.config.ts
-import { createDevSocketNuxtModule } from "devsocket/nuxt";
+import { createBridgeSocketNuxtModule } from "bridgesocket/nuxt";
 import { defineNuxtConfig } from "nuxt/config";
 
 export default defineNuxtConfig({
-  modules: [createDevSocketNuxtModule()],
+  modules: [createBridgeSocketNuxtModule()],
 });
 ```
 
 ### Angular CLI (Proxy Config)
 
 ```ts
-// devsocket.proxy.mjs
-import { createDevSocketAngularCliProxyConfig } from "devsocket/angular/cli";
+// bridgesocket.proxy.mjs
+import { createBridgeSocketAngularCliProxyConfig } from "bridgesocket/angular/cli";
 import { writeFile } from "node:fs/promises";
 
-const proxyConfig = await createDevSocketAngularCliProxyConfig();
+const proxyConfig = await createBridgeSocketAngularCliProxyConfig();
 await writeFile(
-  new URL("./proxy.devsocket.json", import.meta.url),
+  new URL("./proxy.bridgesocket.json", import.meta.url),
   JSON.stringify(proxyConfig, null, 2),
 );
 ```
@@ -311,47 +311,47 @@ await writeFile(
 Then:
 
 ```bash
-node devsocket.proxy.mjs
-ng serve --proxy-config proxy.devsocket.json
+node bridgesocket.proxy.mjs
+ng serve --proxy-config proxy.bridgesocket.json
 ```
 
 ### Bun.serve
 
 ```ts
 import {
-  attachDevSocketToBunServe,
-  withDevSocketBunServeFetch,
-  withDevSocketBunServeWebSocketHandlers,
-} from "devsocket/bun";
+  attachBridgeSocketToBunServe,
+  withBridgeSocketBunServeFetch,
+  withBridgeSocketBunServeWebSocketHandlers,
+} from "bridgesocket/bun";
 
-const devsocket = await attachDevSocketToBunServe({
+const bridgesocket = await attachBridgeSocketToBunServe({
   command: "node",
   args: ["./scripts/dev-runtime.js"],
 });
 
 const server = Bun.serve({
-  fetch: withDevSocketBunServeFetch(
+  fetch: withBridgeSocketBunServeFetch(
     (request) => new Response(`route: ${new URL(request.url).pathname}`),
-    devsocket,
+    bridgesocket,
   ),
-  websocket: withDevSocketBunServeWebSocketHandlers(devsocket),
+  websocket: withBridgeSocketBunServeWebSocketHandlers(bridgesocket),
 });
 
-await devsocket.close();
+await bridgesocket.close();
 server.stop();
 ```
 
 ### Node Server
 
 ```ts
-import { attachDevSocketToNodeServer } from "devsocket/node";
+import { attachBridgeSocketToNodeServer } from "bridgesocket/node";
 import express from "express";
 import http from "node:http";
 
 const app = express();
 const server = http.createServer(app);
 
-await attachDevSocketToNodeServer(
+await attachBridgeSocketToNodeServer(
   {
     middlewares: { use: app.use.bind(app) },
     httpServer: server,
@@ -363,10 +363,10 @@ await attachDevSocketToNodeServer(
 ### Webpack Dev Server
 
 ```ts
-import { withDevSocketWebpackDevServer } from "devsocket/webpack";
+import { withBridgeSocketWebpackDevServer } from "bridgesocket/webpack";
 
 export default {
-  devServer: withDevSocketWebpackDevServer({
+  devServer: withBridgeSocketWebpackDevServer({
     setupMiddlewares: (middlewares) => middlewares,
   }),
 };
@@ -374,7 +374,7 @@ export default {
 
 ## Next.js Bridge Keys
 
-`withDevSocketNext(nextConfig, options)` uses a standalone bridge behind rewrites in development.
+`withBridgeSocketNext(nextConfig, options)` uses a standalone bridge behind rewrites in development.
 
 Default behavior:
 
@@ -386,12 +386,12 @@ Optional override:
 - set `nextBridgeGlobalKey` when you need deterministic keying or intentionally shared bridge state
 
 ```ts
-import { withDevSocketNext } from "devsocket/next";
+import { withBridgeSocketNext } from "bridgesocket/next";
 
-export default withDevSocketNext(
+export default withBridgeSocketNext(
   { reactStrictMode: true },
   {
-    nextBridgeGlobalKey: "__DEVSOCKET_NEXT_BRIDGE__:workspace-a",
+    nextBridgeGlobalKey: "__BRIDGESOCKET_NEXT_BRIDGE__:workspace-a",
   },
 );
 ```

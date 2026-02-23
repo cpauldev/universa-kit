@@ -1,10 +1,10 @@
 import { describe, expect, it } from "bun:test";
 
-import { attachDevSocketToBunServe } from "../adapters/server/bun.js";
+import { attachBridgeSocketToBunServe } from "../adapters/server/bun.js";
 
 describe("bun adapter", () => {
   it("proxies bridge routes and falls through for non-bridge routes", async () => {
-    const handle = await attachDevSocketToBunServe({ autoStart: false });
+    const handle = await attachBridgeSocketToBunServe({ autoStart: false });
     const server = {
       upgrade: () => false,
     };
@@ -20,7 +20,7 @@ describe("bun adapter", () => {
     expect(await appResponse?.text()).toBe("app");
 
     const healthResponse = await fetchHandler(
-      new Request("http://localhost:3000/__devsocket/health"),
+      new Request("http://localhost:3000/__bridgesocket/health"),
       server,
     );
     expect(healthResponse).toBeDefined();
@@ -33,7 +33,7 @@ describe("bun adapter", () => {
   });
 
   it("upgrades websocket requests for bridge events route", async () => {
-    const handle = await attachDevSocketToBunServe({ autoStart: false });
+    const handle = await attachBridgeSocketToBunServe({ autoStart: false });
     const upgrades: unknown[] = [];
     const server = {
       upgrade: (_request: Request, options?: { data?: unknown }) => {
@@ -46,7 +46,7 @@ describe("bun adapter", () => {
     });
 
     const upgradeResponse = await fetchHandler(
-      new Request("http://localhost:3000/__devsocket/events?source=ui", {
+      new Request("http://localhost:3000/__bridgesocket/events?source=ui", {
         headers: {
           upgrade: "websocket",
         },
@@ -57,17 +57,17 @@ describe("bun adapter", () => {
     expect(upgradeResponse).toBeUndefined();
     expect(upgrades.length).toBe(1);
     const upgradeData = upgrades[0] as {
-      __devsocket: { upstreamUrl: string };
+      __bridgesocket: { upstreamUrl: string };
     };
-    expect(upgradeData.__devsocket.upstreamUrl).toBe(
-      `${handle.baseUrl.replace("http://", "ws://")}/__devsocket/events?source=ui`,
+    expect(upgradeData.__bridgesocket.upstreamUrl).toBe(
+      `${handle.baseUrl.replace("http://", "ws://")}/__bridgesocket/events?source=ui`,
     );
 
     await handle.close();
   });
 
-  it("delegates websocket handlers for non-devsocket sockets", async () => {
-    const handle = await attachDevSocketToBunServe({ autoStart: false });
+  it("delegates websocket handlers for non-bridgesocket sockets", async () => {
+    const handle = await attachBridgeSocketToBunServe({ autoStart: false });
     const calls = {
       open: 0,
       message: 0,

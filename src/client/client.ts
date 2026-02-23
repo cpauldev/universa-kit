@@ -1,34 +1,34 @@
 import {
+  BRIDGESOCKET_WS_SUBPROTOCOL,
   BRIDGE_PREFIX_DEFAULT,
-  DEVSOCKET_WS_SUBPROTOCOL,
 } from "../bridge/constants.js";
 import type {
-  DevSocketBridgeEvent,
-  DevSocketBridgeState,
-  DevSocketErrorResponse,
-  DevSocketRuntimeStatus,
+  BridgeSocketBridgeEvent,
+  BridgeSocketBridgeState,
+  BridgeSocketErrorResponse,
+  BridgeSocketRuntimeStatus,
 } from "../types.js";
 
-export interface DevSocketClientOptions {
+export interface BridgeSocketClientOptions {
   baseUrl?: string;
   bridgePathPrefix?: string;
   fetchImpl?: typeof fetch;
   webSocketFactory?: (
     url: string,
     protocols: string[],
-  ) => DevSocketWebSocketLike;
+  ) => BridgeSocketWebSocketLike;
 }
 
-export interface DevSocketBridgeHealth extends DevSocketBridgeState {
+export interface BridgeSocketBridgeHealth extends BridgeSocketBridgeState {
   ok: true;
   bridge: true;
 }
 
-export interface DevSocketEventsSubscriptionOptions {
+export interface BridgeSocketEventsSubscriptionOptions {
   onError?: (error: unknown) => void;
 }
 
-export interface DevSocketWebSocketLike {
+export interface BridgeSocketWebSocketLike {
   close: () => void;
   addEventListener?: (
     event: string,
@@ -46,30 +46,30 @@ export interface DevSocketWebSocketLike {
   ) => void;
 }
 
-export class DevSocketClientError extends Error {
+export class BridgeSocketClientError extends Error {
   statusCode: number;
-  response: DevSocketErrorResponse | null;
+  response: BridgeSocketErrorResponse | null;
 
-  constructor(statusCode: number, response: DevSocketErrorResponse | null) {
+  constructor(statusCode: number, response: BridgeSocketErrorResponse | null) {
     super(
       response?.error.message ?? `Request failed with status ${statusCode}`,
     );
-    this.name = "DevSocketClientError";
+    this.name = "BridgeSocketClientError";
     this.statusCode = statusCode;
     this.response = response;
   }
 }
 
-export interface DevSocketClient {
-  getHealth: () => Promise<DevSocketBridgeHealth>;
-  getState: () => Promise<DevSocketBridgeState>;
-  getRuntimeStatus: () => Promise<DevSocketRuntimeStatus>;
-  startRuntime: () => Promise<DevSocketRuntimeStatus>;
-  restartRuntime: () => Promise<DevSocketRuntimeStatus>;
-  stopRuntime: () => Promise<DevSocketRuntimeStatus>;
+export interface BridgeSocketClient {
+  getHealth: () => Promise<BridgeSocketBridgeHealth>;
+  getState: () => Promise<BridgeSocketBridgeState>;
+  getRuntimeStatus: () => Promise<BridgeSocketRuntimeStatus>;
+  startRuntime: () => Promise<BridgeSocketRuntimeStatus>;
+  restartRuntime: () => Promise<BridgeSocketRuntimeStatus>;
+  stopRuntime: () => Promise<BridgeSocketRuntimeStatus>;
   subscribeEvents: (
-    listener: (event: DevSocketBridgeEvent) => void,
-    options?: DevSocketEventsSubscriptionOptions,
+    listener: (event: BridgeSocketBridgeEvent) => void,
+    options?: BridgeSocketEventsSubscriptionOptions,
   ) => () => void;
 }
 
@@ -110,12 +110,12 @@ function resolveWebSocketUrl(
   }
 
   throw new Error(
-    "DevSocket client requires `baseUrl` in non-browser environments for WebSocket subscriptions.",
+    "BridgeSocket client requires `baseUrl` in non-browser environments for WebSocket subscriptions.",
   );
 }
 
 function addSocketListener(
-  socket: DevSocketWebSocketLike,
+  socket: BridgeSocketWebSocketLike,
   event: string,
   listener: (...args: unknown[]) => void,
 ): void {
@@ -131,7 +131,7 @@ function addSocketListener(
 }
 
 function removeSocketListener(
-  socket: DevSocketWebSocketLike,
+  socket: BridgeSocketWebSocketLike,
   event: string,
   listener: (...args: unknown[]) => void,
 ): void {
@@ -176,9 +176,9 @@ function extractMessagePayload(message: unknown): string {
   return String(message);
 }
 
-export function createDevSocketClient(
-  options: DevSocketClientOptions = {},
-): DevSocketClient {
+export function createBridgeSocketClient(
+  options: BridgeSocketClientOptions = {},
+): BridgeSocketClient {
   const bridgePathPrefix = options.bridgePathPrefix ?? BRIDGE_PREFIX_DEFAULT;
   const fetchImpl = options.fetchImpl ?? fetch;
 
@@ -191,13 +191,13 @@ export function createDevSocketClient(
     const response = await fetchImpl(url, init);
 
     if (!response.ok) {
-      let payload: DevSocketErrorResponse | null;
+      let payload: BridgeSocketErrorResponse | null;
       try {
-        payload = (await response.json()) as DevSocketErrorResponse;
+        payload = (await response.json()) as BridgeSocketErrorResponse;
       } catch {
         payload = null;
       }
-      throw new DevSocketClientError(response.status, payload);
+      throw new BridgeSocketClientError(response.status, payload);
     }
 
     return (await response.json()) as T;
@@ -205,10 +205,10 @@ export function createDevSocketClient(
 
   const requestRuntimeControl = async (
     routeSuffix: "/runtime/start" | "/runtime/restart" | "/runtime/stop",
-  ): Promise<DevSocketRuntimeStatus> => {
+  ): Promise<BridgeSocketRuntimeStatus> => {
     const payload = await requestJson<{
       success: boolean;
-      runtime: DevSocketRuntimeStatus;
+      runtime: BridgeSocketRuntimeStatus;
     }>(routeSuffix, {
       method: "POST",
       headers: {
@@ -221,30 +221,32 @@ export function createDevSocketClient(
   };
 
   return {
-    getHealth: () => requestJson<DevSocketBridgeHealth>("/health"),
-    getState: () => requestJson<DevSocketBridgeState>("/state"),
+    getHealth: () => requestJson<BridgeSocketBridgeHealth>("/health"),
+    getState: () => requestJson<BridgeSocketBridgeState>("/state"),
     getRuntimeStatus: () =>
-      requestJson<DevSocketRuntimeStatus>("/runtime/status"),
+      requestJson<BridgeSocketRuntimeStatus>("/runtime/status"),
     startRuntime: () => requestRuntimeControl("/runtime/start"),
     restartRuntime: () => requestRuntimeControl("/runtime/restart"),
     stopRuntime: () => requestRuntimeControl("/runtime/stop"),
     subscribeEvents: (
-      listener: (event: DevSocketBridgeEvent) => void,
-      subscriptionOptions?: DevSocketEventsSubscriptionOptions,
+      listener: (event: BridgeSocketBridgeEvent) => void,
+      subscriptionOptions?: BridgeSocketEventsSubscriptionOptions,
     ) => {
       const eventsPath = joinPath(bridgePathPrefix, "/events");
       const webSocketUrl = resolveWebSocketUrl(options.baseUrl, eventsPath);
       const socket =
-        options.webSocketFactory?.(webSocketUrl, [DEVSOCKET_WS_SUBPROTOCOL]) ??
+        options.webSocketFactory?.(webSocketUrl, [
+          BRIDGESOCKET_WS_SUBPROTOCOL,
+        ]) ??
         (new WebSocket(webSocketUrl, [
-          DEVSOCKET_WS_SUBPROTOCOL,
-        ]) as DevSocketWebSocketLike);
+          BRIDGESOCKET_WS_SUBPROTOCOL,
+        ]) as BridgeSocketWebSocketLike);
 
       const onMessage = (message: unknown) => {
         try {
           const payload = JSON.parse(
             extractMessagePayload(message),
-          ) as DevSocketBridgeEvent;
+          ) as BridgeSocketBridgeEvent;
           listener(payload);
         } catch (error) {
           subscriptionOptions?.onError?.(error);

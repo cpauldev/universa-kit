@@ -1,13 +1,13 @@
 import { afterEach, describe, expect, it } from "bun:test";
 
-import { DevSocketBridge } from "../bridge/bridge.js";
-import { DEVSOCKET_WS_SUBPROTOCOL } from "../bridge/constants.js";
+import { BridgeSocketBridge } from "../bridge/bridge.js";
+import { BRIDGESOCKET_WS_SUBPROTOCOL } from "../bridge/constants.js";
 import {
   type StandaloneBridgeServer,
-  startStandaloneDevSocketBridgeServer,
+  startStandaloneBridgeSocketBridgeServer,
 } from "../bridge/standalone.js";
 
-const bridges: DevSocketBridge[] = [];
+const bridges: BridgeSocketBridge[] = [];
 const standaloneServers: StandaloneBridgeServer[] = [];
 
 async function requestJson<T>(
@@ -37,9 +37,9 @@ afterEach(async () => {
   bridges.length = 0;
 });
 
-describe("DevSocketBridge", () => {
+describe("BridgeSocketBridge", () => {
   it("reports runtime control as unavailable when command is not configured", () => {
-    const bridge = new DevSocketBridge({ autoStart: false });
+    const bridge = new BridgeSocketBridge({ autoStart: false });
     bridges.push(bridge);
 
     const state = bridge.getState();
@@ -53,7 +53,7 @@ describe("DevSocketBridge", () => {
   });
 
   it("reports runtime control as available when command is configured", () => {
-    const bridge = new DevSocketBridge({
+    const bridge = new BridgeSocketBridge({
       autoStart: false,
       command: process.execPath,
       args: ["-e", "setTimeout(() => process.exit(0), 1000)"],
@@ -69,13 +69,13 @@ describe("DevSocketBridge", () => {
   });
 
   it("returns a deterministic error for runtime start without command", async () => {
-    const server = await startStandaloneDevSocketBridgeServer({
+    const server = await startStandaloneBridgeSocketBridgeServer({
       autoStart: false,
     });
     standaloneServers.push(server);
 
     const response = await fetch(
-      `${server.baseUrl}/__devsocket/runtime/start`,
+      `${server.baseUrl}/__bridgesocket/runtime/start`,
       {
         method: "POST",
         headers: {
@@ -101,14 +101,16 @@ describe("DevSocketBridge", () => {
   });
 
   it("requires POST for runtime control routes", async () => {
-    const server = await startStandaloneDevSocketBridgeServer({
+    const server = await startStandaloneBridgeSocketBridgeServer({
       autoStart: false,
       command: process.execPath,
       args: ["-e", "setTimeout(() => process.exit(0), 1000)"],
     });
     standaloneServers.push(server);
 
-    const response = await fetch(`${server.baseUrl}/__devsocket/runtime/start`);
+    const response = await fetch(
+      `${server.baseUrl}/__bridgesocket/runtime/start`,
+    );
     expect(response.status).toBe(404);
     const payload = (await response.json()) as {
       success: false;
@@ -121,7 +123,7 @@ describe("DevSocketBridge", () => {
   });
 
   it("disables auto-start after explicit stop", async () => {
-    const server = await startStandaloneDevSocketBridgeServer({
+    const server = await startStandaloneBridgeSocketBridgeServer({
       autoStart: true,
       command: process.execPath,
       args: ["-e", "setTimeout(() => process.exit(1), 10)"],
@@ -133,7 +135,7 @@ describe("DevSocketBridge", () => {
       protocolVersion: string;
       runtime: { phase: string; lastError: string | null };
       transportState: string;
-    }>(server.baseUrl, "/__devsocket/state");
+    }>(server.baseUrl, "/__bridgesocket/state");
 
     expect(stateBeforeStop.protocolVersion).toBe("1");
     expect(stateBeforeStop.runtime.phase).toBe("error");
@@ -143,7 +145,7 @@ describe("DevSocketBridge", () => {
     const stopResult = await requestJson<{
       success: boolean;
       runtime: { phase: string };
-    }>(server.baseUrl, "/__devsocket/runtime/stop", {
+    }>(server.baseUrl, "/__bridgesocket/runtime/stop", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -157,7 +159,7 @@ describe("DevSocketBridge", () => {
     const stateAfterStop = await requestJson<{
       runtime: { phase: string; lastError: string | null };
       transportState: string;
-    }>(server.baseUrl, "/__devsocket/state");
+    }>(server.baseUrl, "/__bridgesocket/state");
     const elapsedMs = Date.now() - startedAt;
 
     expect(stateAfterStop.runtime.phase).toBe("stopped");
@@ -167,7 +169,7 @@ describe("DevSocketBridge", () => {
   });
 
   it("accepts state route requests with query strings", async () => {
-    const server = await startStandaloneDevSocketBridgeServer({
+    const server = await startStandaloneBridgeSocketBridgeServer({
       autoStart: false,
     });
     standaloneServers.push(server);
@@ -175,13 +177,13 @@ describe("DevSocketBridge", () => {
     const state = await requestJson<{
       protocolVersion: string;
       runtime: { phase: string };
-    }>(server.baseUrl, "/__devsocket/state?source=test");
+    }>(server.baseUrl, "/__bridgesocket/state?source=test");
     expect(state.protocolVersion).toBe("1");
     expect(state.runtime.phase).toBe("stopped");
   });
 
   it("returns 426 response for unsupported websocket subprotocol", () => {
-    const bridge = new DevSocketBridge({ autoStart: false });
+    const bridge = new BridgeSocketBridge({ autoStart: false });
     bridges.push(bridge);
 
     let responseText = "";
@@ -202,9 +204,9 @@ describe("DevSocketBridge", () => {
     } as unknown as import("stream").Duplex;
 
     const request = {
-      url: "/__devsocket/events",
+      url: "/__bridgesocket/events",
       headers: {
-        "sec-websocket-protocol": "devsocket.v999+json",
+        "sec-websocket-protocol": "bridgesocket.v999+json",
       },
     } as unknown as import("http").IncomingMessage;
 
@@ -225,7 +227,9 @@ describe("DevSocketBridge", () => {
     expect(parsed.success).toBe(false);
     expect(parsed.message).toContain("Unsupported WebSocket subprotocol");
     expect(parsed.error.code).toBe("invalid_request");
-    expect(parsed.error.details?.wsSubprotocol).toBe(DEVSOCKET_WS_SUBPROTOCOL);
+    expect(parsed.error.details?.wsSubprotocol).toBe(
+      BRIDGESOCKET_WS_SUBPROTOCOL,
+    );
     expect(destroyed).toBe(false);
   });
 });

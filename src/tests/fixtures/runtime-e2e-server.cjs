@@ -1,10 +1,10 @@
 const http = require("http");
 
 const host = "127.0.0.1";
-const port = Number(process.env.DEVSOCKET_RUNTIME_PORT || 0);
+const port = Number(process.env.BRIDGESOCKET_RUNTIME_PORT || 0);
 
 if (!port || Number.isNaN(port)) {
-  throw new Error("DEVSOCKET_RUNTIME_PORT is required");
+  throw new Error("BRIDGESOCKET_RUNTIME_PORT is required");
 }
 
 function writeJson(res, statusCode, payload) {

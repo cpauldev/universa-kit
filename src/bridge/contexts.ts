@@ -1,4 +1,7 @@
-import type { DevSocketBridgeState, DevSocketRuntimeStatus } from "../types.js";
+import type {
+  BridgeSocketBridgeState,
+  BridgeSocketRuntimeStatus,
+} from "../types.js";
 import type { RuntimeProxyContext } from "./proxy.js";
 import type { RuntimeControlContext } from "./runtime-control.js";
 
@@ -6,12 +9,12 @@ interface BridgeContextsOptions {
   shouldAutoStartRuntime: () => boolean;
   hasRuntimeControl: () => boolean;
   fallbackCommand: string;
-  getState: () => DevSocketBridgeState;
-  getRuntimeStatus: () => DevSocketRuntimeStatus;
-  startRuntime: () => Promise<DevSocketRuntimeStatus>;
-  restartRuntime: () => Promise<DevSocketRuntimeStatus>;
-  stopRuntime: () => Promise<DevSocketRuntimeStatus>;
-  ensureRuntimeStarted: () => Promise<DevSocketRuntimeStatus>;
+  getState: () => BridgeSocketBridgeState;
+  getRuntimeStatus: () => BridgeSocketRuntimeStatus;
+  startRuntime: () => Promise<BridgeSocketRuntimeStatus>;
+  restartRuntime: () => Promise<BridgeSocketRuntimeStatus>;
+  stopRuntime: () => Promise<BridgeSocketRuntimeStatus>;
+  ensureRuntimeStarted: () => Promise<BridgeSocketRuntimeStatus>;
   getRuntimeUrl: () => string | null;
   enableAutoStartRuntime: () => void;
   disableAutoStartRuntime: () => void;

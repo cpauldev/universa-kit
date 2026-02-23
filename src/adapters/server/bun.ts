@@ -1,15 +1,15 @@
-import { DEVSOCKET_WS_SUBPROTOCOL } from "../../bridge/constants.js";
-import type { DevSocketBridgeOptions } from "../../bridge/options.js";
+import { BRIDGESOCKET_WS_SUBPROTOCOL } from "../../bridge/constants.js";
+import type { BridgeSocketBridgeOptions } from "../../bridge/options.js";
 import {
   type StandaloneBridgeServer,
-  startStandaloneDevSocketBridgeServer,
+  startStandaloneBridgeSocketBridgeServer,
 } from "../../bridge/standalone.js";
 import {
-  type DevSocketAdapterOptions,
+  type BridgeSocketAdapterOptions,
   resolveAdapterOptions,
 } from "../shared/adapter-utils.js";
 
-export type BunDevSocketOptions = DevSocketAdapterOptions;
+export type BunBridgeSocketOptions = BridgeSocketAdapterOptions;
 
 export interface BunServeLikeServer {
   upgrade: (
@@ -47,13 +47,13 @@ export type BunServeNextFetchHandler = (
   server: BunServeLikeServer,
 ) => Response | Promise<Response>;
 
-interface DevSocketBunSocketState {
+interface BridgeSocketBunSocketState {
   upstreamUrl: string;
   upstream: WebSocket | null;
 }
 
-interface DevSocketBunSocketData {
-  __devsocket?: DevSocketBunSocketState;
+interface BridgeSocketBunSocketData {
+  __bridgesocket?: BridgeSocketBunSocketState;
 }
 
 type WebSocketPayload = string | ArrayBuffer | Blob | Uint8Array;
@@ -63,14 +63,16 @@ export interface BunBridgeHandle {
   baseUrl: string;
   createFetchHandler: (next: BunServeNextFetchHandler) => BunServeFetchHandler;
   createWebSocketHandlers: <
-    Data extends DevSocketBunSocketData = DevSocketBunSocketData,
+    Data extends BridgeSocketBunSocketData = BridgeSocketBunSocketData,
   >(
     existing?: BunServeWebSocketHandlers<Data>,
   ) => BunServeWebSocketHandlers<Data>;
   close: () => Promise<void>;
 }
 
-function toBridgeOptions(options: BunDevSocketOptions): DevSocketBridgeOptions {
+function toBridgeOptions(
+  options: BunBridgeSocketOptions,
+): BridgeSocketBridgeOptions {
   const {
     adapterName: _adapterName,
     rewriteSource: _rewriteSource,
@@ -130,15 +132,16 @@ function closeUpstreamSocket(upstream: WebSocket | null): void {
   upstream.close();
 }
 
-export async function attachDevSocketToBunServe(
-  options: BunDevSocketOptions = {},
+export async function attachBridgeSocketToBunServe(
+  options: BunBridgeSocketOptions = {},
 ): Promise<BunBridgeHandle> {
   const resolvedOptions = resolveAdapterOptions(options);
-  const bridgeServer = await startStandaloneDevSocketBridgeServer(
+  const bridgeServer = await startStandaloneBridgeSocketBridgeServer(
     toBridgeOptions(resolvedOptions),
   );
   const upstreamSockets = new Set<WebSocket>();
-  const bridgePathPrefix = resolvedOptions.bridgePathPrefix ?? "/__devsocket";
+  const bridgePathPrefix =
+    resolvedOptions.bridgePathPrefix ?? "/__bridgesocket";
 
   const createFetchHandler = (
     next: BunServeNextFetchHandler,
@@ -159,17 +162,17 @@ export async function attachDevSocketToBunServe(
         const pathWithSearch = `${url.pathname}${url.search}`;
         const upgraded = server.upgrade(request, {
           data: {
-            __devsocket: {
+            __bridgesocket: {
               upstreamUrl: toWebSocketUrl(bridgeServer.baseUrl, pathWithSearch),
               upstream: null,
             },
-          } satisfies DevSocketBunSocketData,
+          } satisfies BridgeSocketBunSocketData,
         });
         if (upgraded) {
           return undefined;
         }
 
-        return new Response("Failed to upgrade devsocket websocket", {
+        return new Response("Failed to upgrade bridgesocket websocket", {
           status: 400,
         });
       }
@@ -188,30 +191,30 @@ export async function attachDevSocketToBunServe(
   };
 
   const createWebSocketHandlers = <
-    Data extends DevSocketBunSocketData = DevSocketBunSocketData,
+    Data extends BridgeSocketBunSocketData = BridgeSocketBunSocketData,
   >(
     existing: BunServeWebSocketHandlers<Data> = {},
   ): BunServeWebSocketHandlers<Data> => {
     return {
       open: (socket) => {
-        const devSocketData = socket.data.__devsocket;
-        if (!devSocketData) {
+        const bridgeSocketData = socket.data.__bridgesocket;
+        if (!bridgeSocketData) {
           existing.open?.(socket);
           return;
         }
 
         const upstream = new WebSocket(
-          devSocketData.upstreamUrl,
-          DEVSOCKET_WS_SUBPROTOCOL,
+          bridgeSocketData.upstreamUrl,
+          BRIDGESOCKET_WS_SUBPROTOCOL,
         );
-        devSocketData.upstream = upstream;
+        bridgeSocketData.upstream = upstream;
         upstreamSockets.add(upstream);
 
         upstream.addEventListener("message", (event) => {
           socket.send(normalizeWebSocketMessage(event.data));
         });
         upstream.addEventListener("error", () => {
-          socket.close(1011, "DevSocket upstream websocket error");
+          socket.close(1011, "BridgeSocket upstream websocket error");
         });
         upstream.addEventListener("close", (event) => {
           upstreamSockets.delete(upstream);
@@ -219,37 +222,37 @@ export async function attachDevSocketToBunServe(
         });
       },
       message: (socket, message) => {
-        const devSocketData = socket.data.__devsocket;
-        if (!devSocketData) {
+        const bridgeSocketData = socket.data.__bridgesocket;
+        if (!bridgeSocketData) {
           existing.message?.(socket, message);
           return;
         }
 
-        const upstream = devSocketData.upstream;
+        const upstream = bridgeSocketData.upstream;
         if (!upstream || upstream.readyState !== WebSocket.OPEN) {
           return;
         }
         upstream.send(normalizeWebSocketMessage(message));
       },
       close: (socket, code, reason) => {
-        const devSocketData = socket.data.__devsocket;
-        if (!devSocketData) {
+        const bridgeSocketData = socket.data.__bridgesocket;
+        if (!bridgeSocketData) {
           existing.close?.(socket, code, reason);
           return;
         }
 
-        closeUpstreamSocket(devSocketData.upstream);
-        devSocketData.upstream = null;
+        closeUpstreamSocket(bridgeSocketData.upstream);
+        bridgeSocketData.upstream = null;
       },
       error: (socket, error) => {
-        const devSocketData = socket.data.__devsocket;
-        if (!devSocketData) {
+        const bridgeSocketData = socket.data.__bridgesocket;
+        if (!bridgeSocketData) {
           existing.error?.(socket, error);
           return;
         }
 
-        closeUpstreamSocket(devSocketData.upstream);
-        devSocketData.upstream = null;
+        closeUpstreamSocket(bridgeSocketData.upstream);
+        bridgeSocketData.upstream = null;
       },
     };
   };
@@ -269,15 +272,15 @@ export async function attachDevSocketToBunServe(
   };
 }
 
-export function withDevSocketBunServeFetch(
+export function withBridgeSocketBunServeFetch(
   next: BunServeNextFetchHandler,
   handle: BunBridgeHandle,
 ): BunServeFetchHandler {
   return handle.createFetchHandler(next);
 }
 
-export function withDevSocketBunServeWebSocketHandlers<
-  Data extends DevSocketBunSocketData = DevSocketBunSocketData,
+export function withBridgeSocketBunServeWebSocketHandlers<
+  Data extends BridgeSocketBunSocketData = BridgeSocketBunSocketData,
 >(
   handle: BunBridgeHandle,
   existing?: BunServeWebSocketHandlers<Data>,

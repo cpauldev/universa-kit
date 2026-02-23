@@ -14,39 +14,43 @@ function createRequest(
 
 describe("bridge router", () => {
   it("matches bridge endpoints with and without query strings", () => {
-    const prefix = "/__devsocket";
+    const prefix = "/__bridgesocket";
     const cases = [
-      { method: "GET", url: "/__devsocket/health", key: "GET /health" },
+      { method: "GET", url: "/__bridgesocket/health", key: "GET /health" },
       {
         method: "GET",
-        url: "/__devsocket/health?source=ui",
+        url: "/__bridgesocket/health?source=ui",
         key: "GET /health",
       },
-      { method: "GET", url: "/__devsocket/state", key: "GET /state" },
-      { method: "GET", url: "/__devsocket/state?source=ui", key: "GET /state" },
+      { method: "GET", url: "/__bridgesocket/state", key: "GET /state" },
       {
         method: "GET",
-        url: "/__devsocket/runtime/status?check=1",
+        url: "/__bridgesocket/state?source=ui",
+        key: "GET /state",
+      },
+      {
+        method: "GET",
+        url: "/__bridgesocket/runtime/status?check=1",
         key: "GET /runtime/status",
       },
       {
         method: "POST",
-        url: "/__devsocket/runtime/start?manual=true",
+        url: "/__bridgesocket/runtime/start?manual=true",
         key: "POST /runtime/start",
       },
       {
         method: "POST",
-        url: "/__devsocket/runtime/restart?manual=true",
+        url: "/__bridgesocket/runtime/restart?manual=true",
         key: "POST /runtime/restart",
       },
       {
         method: "POST",
-        url: "/__devsocket/runtime/stop?manual=true",
+        url: "/__bridgesocket/runtime/stop?manual=true",
         key: "POST /runtime/stop",
       },
       {
         method: "GET",
-        url: "/__devsocket/api/version?debug=true",
+        url: "/__bridgesocket/api/version?debug=true",
         key: "GET /api/version",
       },
     ];
@@ -67,7 +71,7 @@ describe("bridge router", () => {
   it("returns null for non-bridge paths", () => {
     const match = matchBridgeRoute(
       createRequest("GET", "/api/version"),
-      "/__devsocket",
+      "/__bridgesocket",
     );
     expect(match).toBeNull();
   });

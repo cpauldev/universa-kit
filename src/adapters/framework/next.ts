@@ -1,8 +1,8 @@
 import type { StandaloneBridgeServer } from "../../bridge/standalone.js";
 import {
-  DEVSOCKET_NEXT_BRIDGE_GLOBAL_KEY,
-  type DevSocketAdapterOptions,
-  type DevSocketRewriteSpec,
+  BRIDGESOCKET_NEXT_BRIDGE_GLOBAL_KEY,
+  type BridgeSocketAdapterOptions,
+  type BridgeSocketRewriteSpec,
   createBridgeRewriteRoute,
   ensureStandaloneBridgeSingleton,
   normalizeRewrites,
@@ -11,9 +11,9 @@ import {
 
 type MaybePromise<T> = T | Promise<T>;
 
-export type DevSocketNextOptions = DevSocketAdapterOptions;
+export type BridgeSocketNextOptions = BridgeSocketAdapterOptions;
 
-const NEXT_BRIDGE_GLOBAL_KEY_PREFIX = `${DEVSOCKET_NEXT_BRIDGE_GLOBAL_KEY}:next`;
+const NEXT_BRIDGE_GLOBAL_KEY_PREFIX = `${BRIDGESOCKET_NEXT_BRIDGE_GLOBAL_KEY}:next`;
 let nextBridgeInstanceCounter = 0;
 
 function createDefaultNextBridgeGlobalKey(): string {
@@ -22,14 +22,14 @@ function createDefaultNextBridgeGlobalKey(): string {
 }
 
 function ensureBridge(
-  options: DevSocketNextOptions,
+  options: BridgeSocketNextOptions,
 ): Promise<StandaloneBridgeServer> {
   return ensureStandaloneBridgeSingleton(options);
 }
 
-export function withDevSocketNext<T extends Record<string, unknown>>(
+export function withBridgeSocketNext<T extends Record<string, unknown>>(
   nextConfig: T,
-  options: DevSocketNextOptions = {},
+  options: BridgeSocketNextOptions = {},
 ): T {
   const isDev = process.env.NODE_ENV !== "production";
   if (!isDev) {
@@ -41,7 +41,7 @@ export function withDevSocketNext<T extends Record<string, unknown>>(
     options.nextBridgeGlobalKey ?? createDefaultNextBridgeGlobalKey();
   const bridgeOptions = { ...resolvedOptions, nextBridgeGlobalKey };
   const next = { ...nextConfig } as T & {
-    rewrites?: () => MaybePromise<DevSocketRewriteSpec>;
+    rewrites?: () => MaybePromise<BridgeSocketRewriteSpec>;
   };
   const originalRewrites = next.rewrites;
 

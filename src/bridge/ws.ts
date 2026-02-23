@@ -2,8 +2,8 @@ import type { IncomingMessage } from "http";
 import type { Duplex } from "stream";
 import { WebSocket, WebSocketServer } from "ws";
 
-import type { DevSocketRuntimeStatus } from "../types.js";
-import { DEVSOCKET_WS_SUBPROTOCOL } from "./constants.js";
+import type { BridgeSocketRuntimeStatus } from "../types.js";
+import { BRIDGESOCKET_WS_SUBPROTOCOL } from "./constants.js";
 import { rejectUpgrade } from "./errors.js";
 import type { BridgeEventBus } from "./events.js";
 import { getRequestedSubprotocols, isEventsUpgradePath } from "./router.js";
@@ -16,7 +16,7 @@ interface BridgeUpgradeContext {
   shouldAutoStartRuntime: () => boolean;
   ensureRuntimeStarted: () => Promise<unknown>;
   getRuntimeUrl: () => string | null;
-  getRuntimeStatus: () => DevSocketRuntimeStatus;
+  getRuntimeStatus: () => BridgeSocketRuntimeStatus;
 }
 
 export function handleBridgeUpgrade(
@@ -32,12 +32,12 @@ export function handleBridgeUpgrade(
   const requestedProtocols = getRequestedSubprotocols(req);
   if (
     requestedProtocols.length > 0 &&
-    !requestedProtocols.includes(DEVSOCKET_WS_SUBPROTOCOL)
+    !requestedProtocols.includes(BRIDGESOCKET_WS_SUBPROTOCOL)
   ) {
     rejectUpgrade(
       socket,
       426,
-      `Unsupported WebSocket subprotocol. Include Sec-WebSocket-Protocol: ${DEVSOCKET_WS_SUBPROTOCOL}.`,
+      `Unsupported WebSocket subprotocol. Include Sec-WebSocket-Protocol: ${BRIDGESOCKET_WS_SUBPROTOCOL}.`,
     );
     return;
   }

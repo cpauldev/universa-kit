@@ -4,12 +4,12 @@ import { WebSocketServer } from "ws";
 
 import { RuntimeHelper } from "../runtime/runtime-helper.js";
 import type {
-  DevSocketBridgeCapabilities,
-  DevSocketBridgeState,
+  BridgeSocketBridgeCapabilities,
+  BridgeSocketBridgeState,
 } from "../types.js";
 import {
-  DEVSOCKET_PROTOCOL_VERSION,
-  DEVSOCKET_WS_SUBPROTOCOL,
+  BRIDGESOCKET_PROTOCOL_VERSION,
+  BRIDGESOCKET_WS_SUBPROTOCOL,
 } from "./constants.js";
 import {
   createRuntimeControlContext,
@@ -19,7 +19,7 @@ import { writeBridgeError } from "./errors.js";
 import { BridgeEventBus } from "./events.js";
 import { writeJson } from "./http.js";
 import {
-  type DevSocketBridgeOptions,
+  type BridgeSocketBridgeOptions,
   type ResolvedBridgeOptions,
   resolveBridgeOptions,
 } from "./options.js";
@@ -34,16 +34,16 @@ import type { BridgeMiddlewareServer } from "./server-types.js";
 import { createCapabilities, toTransportState } from "./state.js";
 import { handleBridgeUpgrade } from "./ws.js";
 
-export class DevSocketBridge {
+export class BridgeSocketBridge {
   #options: ResolvedBridgeOptions;
   #helper: RuntimeHelper;
-  #capabilities: DevSocketBridgeCapabilities;
+  #capabilities: BridgeSocketBridgeCapabilities;
   #wss = new WebSocketServer({
     noServer: true,
     perMessageDeflate: false,
     handleProtocols: (protocols) => {
-      return protocols.has(DEVSOCKET_WS_SUBPROTOCOL)
-        ? DEVSOCKET_WS_SUBPROTOCOL
+      return protocols.has(BRIDGESOCKET_WS_SUBPROTOCOL)
+        ? BRIDGESOCKET_WS_SUBPROTOCOL
         : false;
     },
   });
@@ -51,7 +51,7 @@ export class DevSocketBridge {
   #closed = false;
   #autoStartEnabled = true;
 
-  constructor(options: DevSocketBridgeOptions = {}) {
+  constructor(options: BridgeSocketBridgeOptions = {}) {
     this.#options = resolveBridgeOptions(options);
     this.#helper = new RuntimeHelper(this.#options);
     const support = this.#helper.getControlSupport();
@@ -72,10 +72,10 @@ export class DevSocketBridge {
     return this.#options.bridgePathPrefix;
   }
 
-  getState(): DevSocketBridgeState {
+  getState(): BridgeSocketBridgeState {
     const runtime = this.#helper.getStatus();
     return {
-      protocolVersion: DEVSOCKET_PROTOCOL_VERSION,
+      protocolVersion: BRIDGESOCKET_PROTOCOL_VERSION,
       transportState: toTransportState(runtime),
       runtime,
       capabilities: this.#capabilities,
@@ -174,7 +174,7 @@ export class DevSocketBridge {
       res,
       404,
       "route_not_found",
-      `Unknown devsocket bridge route: ${match.routeWithSearch}`,
+      `Unknown bridgesocket bridge route: ${match.routeWithSearch}`,
       {
         details: {
           route: match.routeWithSearch,
@@ -222,9 +222,9 @@ export class DevSocketBridge {
     return createRuntimeProxyContext(this.getBridgeContextOptions());
   }
 }
-export async function createDevSocketBridge(
-  options: DevSocketBridgeOptions = {},
-): Promise<DevSocketBridge> {
-  return new DevSocketBridge(options);
+export async function createBridgeSocketBridge(
+  options: BridgeSocketBridgeOptions = {},
+): Promise<BridgeSocketBridge> {
+  return new BridgeSocketBridge(options);
 }
-export type { DevSocketBridgeOptions } from "./options.js";
+export type { BridgeSocketBridgeOptions } from "./options.js";

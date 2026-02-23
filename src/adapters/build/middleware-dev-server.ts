@@ -4,7 +4,7 @@ import {
   createBridgeLifecycle,
   resolveAdapterOptions,
   type BridgeLifecycle,
-  type DevSocketAdapterOptions,
+  type BridgeSocketAdapterOptions,
   type MiddlewareAdapterServer,
 } from "../shared/adapter-utils.js";
 
@@ -59,18 +59,18 @@ function toMiddlewareAdapterServer(
 }
 
 export function createSetupMiddlewaresBridgeLifecycle(
-  options: DevSocketAdapterOptions = {},
+  options: BridgeSocketAdapterOptions = {},
 ): BridgeLifecycle {
   return createBridgeLifecycle(resolveAdapterOptions(options));
 }
 
-export function withDevSocketSetupMiddlewares<
+export function withBridgeSocketSetupMiddlewares<
   TMiddlewares extends unknown[],
   TDevServer extends SetupMiddlewaresDevServerLike,
   TConfig extends SetupMiddlewaresConfig<TMiddlewares, TDevServer>,
 >(
   config: TConfig,
-  options: DevSocketAdapterOptions = {},
+  options: BridgeSocketAdapterOptions = {},
 ): TConfig & SetupMiddlewaresConfig<TMiddlewares, TDevServer> {
   const lifecycle = createSetupMiddlewaresBridgeLifecycle(options);
   const originalSetupMiddlewares = config.setupMiddlewares;
@@ -90,3 +90,4 @@ export function withDevSocketSetupMiddlewares<
     },
   } as TConfig & SetupMiddlewaresConfig<TMiddlewares, TDevServer>;
 }
+

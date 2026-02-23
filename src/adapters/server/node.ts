@@ -1,27 +1,27 @@
-import type { DevSocketBridge } from "../../bridge/bridge.js";
+import type { BridgeSocketBridge } from "../../bridge/bridge.js";
 import {
   type BridgeLifecycle,
-  type DevSocketAdapterOptions,
+  type BridgeSocketAdapterOptions,
   type MiddlewareAdapterServer,
   createBridgeLifecycle,
 } from "../shared/adapter-utils.js";
 
-export type NodeDevSocketOptions = DevSocketAdapterOptions;
+export type NodeBridgeSocketOptions = BridgeSocketAdapterOptions;
 
 export interface NodeBridgeHandle {
-  bridge: DevSocketBridge;
+  bridge: BridgeSocketBridge;
   close: () => Promise<void>;
 }
 
 export function createNodeBridgeLifecycle(
-  options: NodeDevSocketOptions = {},
+  options: NodeBridgeSocketOptions = {},
 ): BridgeLifecycle {
   return createBridgeLifecycle(options);
 }
 
-export async function attachDevSocketToNodeServer(
+export async function attachBridgeSocketToNodeServer(
   server: MiddlewareAdapterServer,
-  options: NodeDevSocketOptions = {},
+  options: NodeBridgeSocketOptions = {},
 ): Promise<NodeBridgeHandle> {
   const lifecycle = createNodeBridgeLifecycle(options);
   const bridge = await lifecycle.setup(server);

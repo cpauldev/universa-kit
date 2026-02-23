@@ -1,45 +1,46 @@
 import {
-  type DevSocketBridge,
-  type DevSocketBridgeOptions,
-  createDevSocketBridge,
+  type BridgeSocketBridge,
+  type BridgeSocketBridgeOptions,
+  createBridgeSocketBridge,
 } from "../../bridge/bridge.js";
 import type { BridgeMiddlewareServer } from "../../bridge/server-types.js";
 import {
   type StandaloneBridgeServer,
-  startStandaloneDevSocketBridgeServer,
+  startStandaloneBridgeSocketBridgeServer,
 } from "../../bridge/standalone.js";
 
-export const DEVSOCKET_DEV_ADAPTER_NAME = "devsocket-bridge";
-export const DEVSOCKET_BRIDGE_PATH_PREFIX = "/__devsocket";
-export const DEVSOCKET_BRIDGE_REWRITE_SOURCE = "/__devsocket/:path*";
-export const DEVSOCKET_NEXT_BRIDGE_GLOBAL_KEY = "__DEVSOCKET_NEXT_BRIDGE__";
+export const BRIDGESOCKET_DEV_ADAPTER_NAME = "bridgesocket-bridge";
+export const BRIDGESOCKET_BRIDGE_PATH_PREFIX = "/__bridgesocket";
+export const BRIDGESOCKET_BRIDGE_REWRITE_SOURCE = "/__bridgesocket/:path*";
+export const BRIDGESOCKET_NEXT_BRIDGE_GLOBAL_KEY =
+  "__BRIDGESOCKET_NEXT_BRIDGE__";
 
-export interface DevSocketRewriteRule {
+export interface BridgeSocketRewriteRule {
   source: string;
   destination: string;
 }
 
-export type DevSocketRewriteSpec =
-  | DevSocketRewriteRule[]
+export type BridgeSocketRewriteSpec =
+  | BridgeSocketRewriteRule[]
   | {
-      beforeFiles?: DevSocketRewriteRule[];
-      afterFiles?: DevSocketRewriteRule[];
-      fallback?: DevSocketRewriteRule[];
+      beforeFiles?: BridgeSocketRewriteRule[];
+      afterFiles?: BridgeSocketRewriteRule[];
+      fallback?: BridgeSocketRewriteRule[];
     };
 
-export interface DevSocketNormalizedRewrites {
-  beforeFiles: DevSocketRewriteRule[];
-  afterFiles: DevSocketRewriteRule[];
-  fallback: DevSocketRewriteRule[];
+export interface BridgeSocketNormalizedRewrites {
+  beforeFiles: BridgeSocketRewriteRule[];
+  afterFiles: BridgeSocketRewriteRule[];
+  fallback: BridgeSocketRewriteRule[];
 }
 
-export interface DevSocketAdapterOptions extends DevSocketBridgeOptions {
+export interface BridgeSocketAdapterOptions extends BridgeSocketBridgeOptions {
   adapterName?: string;
   rewriteSource?: string;
   nextBridgeGlobalKey?: string;
 }
 
-interface ResolvedDevSocketAdapterOptions extends DevSocketBridgeOptions {
+interface ResolvedBridgeSocketAdapterOptions extends BridgeSocketBridgeOptions {
   adapterName: string;
   rewriteSource: string;
   nextBridgeGlobalKey?: string;
@@ -48,29 +49,30 @@ interface ResolvedDevSocketAdapterOptions extends DevSocketBridgeOptions {
 export type MiddlewareAdapterServer = BridgeMiddlewareServer;
 
 export interface BridgeLifecycle {
-  setup: (server: MiddlewareAdapterServer) => Promise<DevSocketBridge>;
+  setup: (server: MiddlewareAdapterServer) => Promise<BridgeSocketBridge>;
   teardown: () => Promise<void>;
-  getBridge: () => DevSocketBridge | null;
+  getBridge: () => BridgeSocketBridge | null;
 }
 
 export type ViteAdapterServer = MiddlewareAdapterServer;
 export type ViteBridgeLifecycle = BridgeLifecycle;
 
 export function resolveAdapterOptions(
-  options: DevSocketAdapterOptions = {},
-): ResolvedDevSocketAdapterOptions {
+  options: BridgeSocketAdapterOptions = {},
+): ResolvedBridgeSocketAdapterOptions {
   return {
     ...options,
-    adapterName: options.adapterName ?? DEVSOCKET_DEV_ADAPTER_NAME,
-    bridgePathPrefix: options.bridgePathPrefix ?? DEVSOCKET_BRIDGE_PATH_PREFIX,
-    rewriteSource: options.rewriteSource ?? DEVSOCKET_BRIDGE_REWRITE_SOURCE,
+    adapterName: options.adapterName ?? BRIDGESOCKET_DEV_ADAPTER_NAME,
+    bridgePathPrefix:
+      options.bridgePathPrefix ?? BRIDGESOCKET_BRIDGE_PATH_PREFIX,
+    rewriteSource: options.rewriteSource ?? BRIDGESOCKET_BRIDGE_REWRITE_SOURCE,
     nextBridgeGlobalKey: options.nextBridgeGlobalKey,
   };
 }
 
 function toBridgeOptions(
-  options: DevSocketAdapterOptions,
-): DevSocketBridgeOptions {
+  options: BridgeSocketAdapterOptions,
+): BridgeSocketBridgeOptions {
   const {
     adapterName: _adapterName,
     rewriteSource: _rewriteSource,
@@ -82,26 +84,26 @@ function toBridgeOptions(
 
 export async function attachBridgeToServer(
   server: MiddlewareAdapterServer,
-  options: DevSocketAdapterOptions,
-): Promise<DevSocketBridge> {
-  const bridge = await createDevSocketBridge(toBridgeOptions(options));
+  options: BridgeSocketAdapterOptions,
+): Promise<BridgeSocketBridge> {
+  const bridge = await createBridgeSocketBridge(toBridgeOptions(options));
   await bridge.attach(server);
   return bridge;
 }
 
 export function attachBridgeToViteServer(
   server: ViteAdapterServer,
-  options: DevSocketAdapterOptions,
-): Promise<DevSocketBridge> {
+  options: BridgeSocketAdapterOptions,
+): Promise<BridgeSocketBridge> {
   return attachBridgeToServer(server, options);
 }
 
 export function createBridgeLifecycle(
-  options: DevSocketAdapterOptions = {},
+  options: BridgeSocketAdapterOptions = {},
 ): BridgeLifecycle {
   const resolvedOptions = resolveAdapterOptions(options);
-  let bridge: DevSocketBridge | null = null;
-  let setupPromise: Promise<DevSocketBridge> | null = null;
+  let bridge: BridgeSocketBridge | null = null;
+  let setupPromise: Promise<BridgeSocketBridge> | null = null;
 
   return {
     async setup(server) {
@@ -149,23 +151,23 @@ export function createBridgeLifecycle(
 }
 
 export function createViteBridgeLifecycle(
-  options: DevSocketAdapterOptions = {},
+  options: BridgeSocketAdapterOptions = {},
 ): ViteBridgeLifecycle {
   return createBridgeLifecycle(options);
 }
 
 export function ensureStandaloneBridgeSingleton(
-  options: DevSocketAdapterOptions,
+  options: BridgeSocketAdapterOptions,
 ): Promise<StandaloneBridgeServer> {
   const resolvedOptions = resolveAdapterOptions(options);
   const bridgeGlobal = globalThis as typeof globalThis & {
     [key: string]: Promise<StandaloneBridgeServer> | undefined;
   };
   const globalKey =
-    resolvedOptions.nextBridgeGlobalKey ?? DEVSOCKET_NEXT_BRIDGE_GLOBAL_KEY;
+    resolvedOptions.nextBridgeGlobalKey ?? BRIDGESOCKET_NEXT_BRIDGE_GLOBAL_KEY;
 
   if (!bridgeGlobal[globalKey]) {
-    const startupPromise = startStandaloneDevSocketBridgeServer(
+    const startupPromise = startStandaloneBridgeSocketBridgeServer(
       toBridgeOptions(resolvedOptions),
     );
     const guardedPromise = startupPromise.catch((error) => {
@@ -179,15 +181,15 @@ export function ensureStandaloneBridgeSingleton(
 
   const bridge = bridgeGlobal[globalKey];
   if (!bridge) {
-    throw new Error("Failed to initialize standalone devsocket bridge");
+    throw new Error("Failed to initialize standalone bridgesocket bridge");
   }
 
   return bridge;
 }
 
 export function normalizeRewrites(
-  rewrites: DevSocketRewriteSpec | undefined,
-): DevSocketNormalizedRewrites {
+  rewrites: BridgeSocketRewriteSpec | undefined,
+): BridgeSocketNormalizedRewrites {
   if (!rewrites) {
     return { beforeFiles: [], afterFiles: [], fallback: [] };
   }
@@ -205,8 +207,8 @@ export function normalizeRewrites(
 
 export function createBridgeRewriteRoute(
   baseUrl: string,
-  rewriteSource = DEVSOCKET_BRIDGE_REWRITE_SOURCE,
-): DevSocketRewriteRule {
+  rewriteSource = BRIDGESOCKET_BRIDGE_REWRITE_SOURCE,
+): BridgeSocketRewriteRule {
   return {
     source: rewriteSource,
     destination: `${baseUrl}${rewriteSource}`,

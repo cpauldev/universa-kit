@@ -1,8 +1,11 @@
 import type { ServerResponse } from "http";
 import type { Duplex } from "stream";
 
-import type { DevSocketErrorCode, DevSocketErrorPayload } from "../types.js";
-import { DEVSOCKET_WS_SUBPROTOCOL } from "./constants.js";
+import type {
+  BridgeSocketErrorCode,
+  BridgeSocketErrorPayload,
+} from "../types.js";
+import { BRIDGESOCKET_WS_SUBPROTOCOL } from "./constants.js";
 import { writeError } from "./http.js";
 
 interface BridgeErrorOptions {
@@ -13,11 +16,11 @@ interface BridgeErrorOptions {
 export function writeBridgeError(
   res: ServerResponse,
   statusCode: number,
-  code: DevSocketErrorCode,
+  code: BridgeSocketErrorCode,
   message: string,
   options?: BridgeErrorOptions,
 ): void {
-  const error: DevSocketErrorPayload = {
+  const error: BridgeSocketErrorPayload = {
     code,
     message,
     retryable: options?.retryable ?? false,
@@ -40,9 +43,9 @@ export function rejectUpgrade(
       message,
       retryable: false,
       details: {
-        wsSubprotocol: DEVSOCKET_WS_SUBPROTOCOL,
+        wsSubprotocol: BRIDGESOCKET_WS_SUBPROTOCOL,
       },
-    } satisfies DevSocketErrorPayload,
+    } satisfies BridgeSocketErrorPayload,
   });
   const reason = statusCode === 426 ? "Upgrade Required" : "Bad Request";
   const responseText =

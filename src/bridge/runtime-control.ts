@@ -1,17 +1,20 @@
 import type { ServerResponse } from "http";
 
-import type { DevSocketBridgeState, DevSocketRuntimeStatus } from "../types.js";
+import type {
+  BridgeSocketBridgeState,
+  BridgeSocketRuntimeStatus,
+} from "../types.js";
 import { writeJson } from "./http.js";
 
 export interface RuntimeControlContext {
   shouldAutoStartRuntime: () => boolean;
   hasRuntimeControl: () => boolean;
   fallbackCommand: string;
-  getState: () => DevSocketBridgeState;
-  getRuntimeStatus: () => DevSocketRuntimeStatus;
-  startRuntime: () => Promise<DevSocketRuntimeStatus>;
-  restartRuntime: () => Promise<DevSocketRuntimeStatus>;
-  stopRuntime: () => Promise<DevSocketRuntimeStatus>;
+  getState: () => BridgeSocketBridgeState;
+  getRuntimeStatus: () => BridgeSocketRuntimeStatus;
+  startRuntime: () => Promise<BridgeSocketRuntimeStatus>;
+  restartRuntime: () => Promise<BridgeSocketRuntimeStatus>;
+  stopRuntime: () => Promise<BridgeSocketRuntimeStatus>;
   enableAutoStartRuntime: () => void;
   disableAutoStartRuntime: () => void;
   emitRuntimeError: (error: string) => void;
@@ -124,7 +127,7 @@ async function handleControlAction(
   res: ServerResponse,
   context: RuntimeControlContext,
   errorCode: "runtime_start_failed" | "runtime_control_failed",
-  action: () => Promise<DevSocketRuntimeStatus>,
+  action: () => Promise<BridgeSocketRuntimeStatus>,
 ): Promise<void> {
   try {
     const status = await action();

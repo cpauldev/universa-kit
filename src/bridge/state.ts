@@ -1,18 +1,18 @@
 import type {
-  DevSocketBridgeCapabilities,
-  DevSocketBridgeState,
-  DevSocketRuntimeStatus,
+  BridgeSocketBridgeCapabilities,
+  BridgeSocketBridgeState,
+  BridgeSocketRuntimeStatus,
 } from "../types.js";
 import {
-  DEVSOCKET_PROTOCOL_VERSION,
-  DEVSOCKET_WS_SUBPROTOCOL,
+  BRIDGESOCKET_PROTOCOL_VERSION,
+  BRIDGESOCKET_WS_SUBPROTOCOL,
 } from "./constants.js";
 
 export function createCapabilities(
   fallbackCommand: string,
   hasRuntimeControl: boolean,
-  commandHost: DevSocketBridgeCapabilities["commandHost"],
-): DevSocketBridgeCapabilities {
+  commandHost: BridgeSocketBridgeCapabilities["commandHost"],
+): BridgeSocketBridgeCapabilities {
   return {
     commandHost,
     hasRuntimeControl,
@@ -20,14 +20,14 @@ export function createCapabilities(
     canRestartRuntime: hasRuntimeControl,
     canStopRuntime: hasRuntimeControl,
     fallbackCommand,
-    wsSubprotocol: DEVSOCKET_WS_SUBPROTOCOL,
-    supportedProtocolVersions: [DEVSOCKET_PROTOCOL_VERSION],
+    wsSubprotocol: BRIDGESOCKET_WS_SUBPROTOCOL,
+    supportedProtocolVersions: [BRIDGESOCKET_PROTOCOL_VERSION],
   };
 }
 
 export function toTransportState(
-  runtime: DevSocketRuntimeStatus,
-): DevSocketBridgeState["transportState"] {
+  runtime: BridgeSocketRuntimeStatus,
+): BridgeSocketBridgeState["transportState"] {
   switch (runtime.phase) {
     case "running":
       return "connected";
