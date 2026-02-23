@@ -27,7 +27,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22.x
-          registry-url: "https://registry.npmjs.org"
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -93,7 +92,10 @@ jobs:
 
       - name: Publish to npm
         if: steps.npm_version.outputs.already_published != 'true'
-        run: npm publish --access public --provenance
+        run: |
+          set -euo pipefail
+          unset NODE_AUTH_TOKEN
+          npm publish --access public --provenance
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
