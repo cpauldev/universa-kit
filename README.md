@@ -17,6 +17,8 @@ Because web development frameworks are not standardized, it has not been possibl
 
 BridgeSocket is a universal bridge that mounts a same-origin control plane (`/__bridgesocket/*`) on your host dev server. This lets browser UIs and local clients read state, stream events, control the runtime lifecycle, and proxy runtime APIs consistently across frameworks. Businesses can now offer richer service experiences as web applications while reaching as many developers as possible.
 
+_BridgeSocket primarily targets browser-based dev UIs, but the same bridge also works for non-UI local clients such as scripts and CLIs._
+
 ## Who Should Use This
 
 | You are...                                                | Should you use BridgeSocket directly? | Why                                                                                             |
@@ -27,7 +29,6 @@ BridgeSocket is a universal bridge that mounts a same-origin control plane (`/__
 
 ## Table Of Contents
 
-- [Why BridgeSocket Matters](#why-bridgesocket-matters)
 - [What It Provides](#what-it-provides)
 - [Use Cases](#use-cases)
 - [Install](#install)
@@ -43,16 +44,6 @@ BridgeSocket is a universal bridge that mounts a same-origin control plane (`/__
 - [Compatibility](#compatibility)
 - [Documentation](#documentation)
 - [Packaging](#packaging)
-
-## Why BridgeSocket Matters
-
-Imagine you’re building a plugin that runs next to a local web app, such as an overlay, sidebar, or control panel. It might be a paid tool suite, a component marketplace with drag-and-drop editing, or web UI for a CLI's setup process and real-time project status. You want it to work across frameworks instead of being tied to one stack, similarly to an app working on many operating system rather than one.
-
-The problem is that frameworks, dev servers, and build tools all expose integration hooks differently. Without a shared integration layer, teams either rebuild the same glue code per stack, support only one framework, or drop the idea due to complexity.
-
-BridgeSocket solves this by providing a shared adapter + bridge layer, so you can build the product and UX, while BridgeSocket handles cross-framework integration and same-origin transport. With BridgeSocket, developers can create univerally-compatible plugins and users can use them on the framework of their choice with minimal setup.
-
-BridgeSocket primarily targets browser-based dev UIs, but the same bridge also works for non-UI local clients such as scripts and CLIs.
 
 ## What It Provides
 
