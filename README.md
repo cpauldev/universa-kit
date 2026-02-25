@@ -17,7 +17,7 @@ Because web development frameworks are not standardized, it has not been possibl
 
 BridgeSocket is a universal bridge that mounts a same-origin control plane (`/__bridgesocket/*`) on your host dev server. This lets browser UIs and local clients read state, stream events, control the runtime lifecycle, and proxy runtime APIs consistently across frameworks. Businesses can now offer richer service experiences as web applications while reaching as many developers as possible.
 
-_BridgeSocket primarily targets browser-based dev UIs, but the same bridge also works for non-UI local clients such as scripts and CLIs._
+_BridgeSocket primarily targets browser-based dev UIs, but the same bridge also works for non-UI local clients such as scripts and CLIs. BridgeSocket is compatible with tunnels like Cloudflare Tunnel._
 
 ## Who Should Use This
 
