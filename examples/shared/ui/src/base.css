@@ -1,0 +1,98 @@
+/* ── Font faces ─────────────────────────────────────────────────────────────── */
+
+@font-face {
+  font-family: "Cal Sans";
+  src: url("./fonts/cal-sans-regular.woff2") format("woff2");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("./fonts/inter-variable.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("./fonts/inter-variable-italic.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  src: url("./fonts/geist-mono-variable.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+/* ── CSS variables ──────────────────────────────────────────────────────────── */
+
+:root {
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "Geist Mono", monospace;
+  --font-cal-sans: "Cal Sans", sans-serif;
+
+  --background: rgb(255 255 255);
+  --foreground: oklch(0.141 0.005 285.823);
+  --card: rgb(255 255 255);
+  --card-foreground: oklch(0.141 0.005 285.823);
+  --border: oklch(0.92 0.004 286.32);
+  --secondary: oklch(0.967 0.001 286.375);
+  --muted-foreground: oklch(0.552 0.016 285.938);
+}
+
+.dark {
+  --background: oklch(0.051 0.005 285.823);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.12 0.006 285.885);
+  --card-foreground: oklch(0.985 0 0);
+  --border: oklch(1 0 0 / 10%);
+  --secondary: oklch(0.184 0.006 286.033);
+  --muted-foreground: oklch(0.705 0.015 286.067);
+}
+
+/* ── Base ───────────────────────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Typography ─────────────────────────────────────────────────────────────── */
+
+h1 {
+  font-family: var(--font-cal-sans), "Cal Sans", sans-serif;
+  font-size: 2.5rem;
+  font-weight: normal;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  h1 {
+    font-size: 3.5rem;
+  }
+}
+
+p {
+  margin: 0;
+}
+
+code {
+  font-family: var(--font-mono);
+}

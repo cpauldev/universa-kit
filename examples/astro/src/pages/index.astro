@@ -1,0 +1,159 @@
+---
+import "example-ui/styles.css";
+import "demo/overlay";
+import { Moon, Sun } from "@lucide/astro";
+import AstroIcon from "../components/icons/Astro.astro";
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Demo — Astro</title>
+  </head>
+  <body>
+    <div class="dp-page">
+      <div class="dp-container">
+        <header class="dp-header">
+          <div class="dp-header-left">
+            <h1>Demo</h1>
+            <div class="dp-pill" style="background-color: #FF5D01">
+              <AstroIcon class="dp-pill-icon" style="color: white" aria-hidden="true" />
+              <p style="color: white">Astro</p>
+            </div>
+          </div>
+        </header>
+
+        <div class="dp-card">
+          <div class="dp-card-header">
+            <p class="dp-card-title">Bridge</p>
+          </div>
+          <div class="dp-card-content">
+            <div class="dp-frame">
+              <div class="dp-frame-body">
+                <div class="dp-status-row">
+                  <span class="dp-status-label">Transport</span>
+                  <span id="transport-badge" class="dp-badge dp-badge--default">—</span>
+                </div>
+                <div class="dp-status-row">
+                  <span class="dp-status-label">Runtime</span>
+                  <span id="phase-badge" class="dp-badge dp-badge--default">—</span>
+                </div>
+                <div id="url-row" class="dp-status-row" style="display:none">
+                  <span class="dp-status-label">URL</span>
+                  <span id="url-value" class="dp-status-value"></span>
+                </div>
+              </div>
+              <div class="dp-frame-footer">
+                <button id="btn-start" class="dp-btn" disabled>Start</button>
+                <button id="btn-restart" class="dp-btn" disabled>Restart</button>
+                <button id="btn-stop" class="dp-btn" disabled>Stop</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button id="theme-btn" class="dp-icon-btn" aria-label="Toggle theme" style="align-self: center">
+          <Moon id="moon-icon" size={20} />
+          <Sun id="sun-icon" size={20} style="display:none" />
+        </button>
+      </div>
+    </div>
+
+    <script>
+      import { applyTheme, getInitialTheme, toggleTheme } from "example-ui/theme";
+      import type { Theme } from "example-ui/theme";
+      import { createDemoApi } from "demo/overlay";
+      import type { BridgeSocketBridgeState } from "demo/overlay";
+      import { phaseBadgeClass, transportBadgeClass } from "example-ui/bridge";
+
+      let theme: Theme = getInitialTheme();
+      applyTheme(theme);
+
+      // Theme toggle
+      const moonIcon = document.getElementById("moon-icon");
+      const sunIcon = document.getElementById("sun-icon");
+
+      function updateIcons() {
+        if (!moonIcon || !sunIcon) return;
+        moonIcon.style.display = theme === "dark" ? "none" : "block";
+        sunIcon.style.display = theme === "dark" ? "block" : "none";
+      }
+      updateIcons();
+
+      document.getElementById("theme-btn")?.addEventListener("click", () => {
+        theme = toggleTheme(theme);
+        applyTheme(theme);
+        updateIcons();
+      });
+
+      // Bridge card
+      const api = createDemoApi();
+      let actionLoading: string | null = null;
+      let currentPhase: string | null = null;
+
+
+      function updateButtons(state: BridgeSocketBridgeState | null) {
+        const phase = state?.runtime.phase ?? null;
+        const isTransitioning = !!actionLoading || phase === "starting" || phase === "stopping";
+        const btnStart = document.getElementById("btn-start") as HTMLButtonElement;
+        const btnRestart = document.getElementById("btn-restart") as HTMLButtonElement;
+        const btnStop = document.getElementById("btn-stop") as HTMLButtonElement;
+        if (btnStart) btnStart.disabled = isTransitioning || phase === "running";
+        if (btnRestart) btnRestart.disabled = isTransitioning || phase === "stopped" || phase === "error" || phase === null;
+        if (btnStop) btnStop.disabled = isTransitioning || phase === "stopped" || phase === "error" || phase === null;
+      }
+
+      function updateUI(state: BridgeSocketBridgeState | null) {
+        const phase = state?.runtime.phase ?? null;
+        const transport = state?.transportState ?? null;
+        const url = state?.runtime.url ?? null;
+        currentPhase = phase;
+
+        const phaseBadge = document.getElementById("phase-badge");
+        const transportBadge = document.getElementById("transport-badge");
+        const urlRow = document.getElementById("url-row");
+        const urlValue = document.getElementById("url-value");
+
+        if (phaseBadge) { phaseBadge.className = phaseBadgeClass(phase); phaseBadge.textContent = phase ?? "—"; }
+        if (transportBadge) { transportBadge.className = transportBadgeClass(transport); transportBadge.textContent = transport ?? "—"; }
+        if (urlRow) urlRow.style.display = url ? "flex" : "none";
+        if (urlValue) urlValue.textContent = url ?? "";
+
+        updateButtons(state);
+      }
+
+      const refresh = async () => {
+        try { updateUI(await api.getBridgeState()); } catch {}
+      };
+
+      refresh();
+      const interval = setInterval(refresh, 2000);
+
+      async function handleAction(action: "start" | "restart" | "stop") {
+        actionLoading = action;
+        const btn = document.getElementById(`btn-${action}`) as HTMLButtonElement;
+        const labels: Record<string, string> = { start: "Starting…", restart: "Restarting…", stop: "Stopping…" };
+        if (btn) btn.textContent = labels[action] ?? action;
+        updateButtons(null);
+        try {
+          if (action === "start") await api.startRuntime();
+          else if (action === "restart") await api.restartRuntime();
+          else await api.stopRuntime();
+          updateUI(await api.getBridgeState());
+        } catch {}
+        const resetLabels: Record<string, string> = { start: "Start", restart: "Restart", stop: "Stop" };
+        if (btn) btn.textContent = resetLabels[action] ?? action;
+        actionLoading = null;
+        updateButtons(await api.getBridgeState().catch(() => null));
+      }
+
+      document.getElementById("btn-start")?.addEventListener("click", () => handleAction("start"));
+      document.getElementById("btn-restart")?.addEventListener("click", () => handleAction("restart"));
+      document.getElementById("btn-stop")?.addEventListener("click", () => handleAction("stop"));
+
+      window.addEventListener("unload", () => clearInterval(interval));
+    </script>
+  </body>
+</html>

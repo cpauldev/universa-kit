@@ -1,0 +1,12 @@
+{
+  "name": "example-ui",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./theme": "./src/theme.ts",
+    "./styles.css": "./src/styles.css",
+    "./base.css": "./src/base.css",
+    "./bridge": "./src/bridge.ts"
+  }
+}

@@ -18,7 +18,19 @@ export default [
       "**/*.config.js",
       "**/*.config.ts",
       "**/*.config.mjs",
+      "**/.next/**",
+      "**/.nuxt/**",
+      "**/.svelte-kit/**",
+      "**/.output/**",
     ],
+  },
+  {
+    files: ["examples/*/src/**/*.{js,ts,tsx}"],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+      },
+    },
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
