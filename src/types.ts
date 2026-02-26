@@ -58,6 +58,7 @@ export interface BridgeSocketBridgeState {
     | "degraded";
   runtime: BridgeSocketRuntimeStatus;
   capabilities: BridgeSocketBridgeCapabilities;
+  error?: string;
 }
 
 export interface BridgeSocketCommandRequest {

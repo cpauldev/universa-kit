@@ -167,95 +167,110 @@ export class RuntimeHelper {
         lastError: null,
       });
 
-      const host = this.#options.host ?? DEFAULT_HOST;
-      const port = await findOpenPort(host);
-      const url = `http://${host}:${port}`;
-      const { command, args } = resolveRuntimeCommand(this.#options);
-      const cwd = this.#options.cwd || process.cwd();
-      const runtimePortEnvVar =
-        this.#options.runtimePortEnvVar ?? DEFAULT_RUNTIME_PORT_ENV_VAR;
+      try {
+        const host = this.#options.host ?? DEFAULT_HOST;
+        const port = await findOpenPort(host);
+        const url = `http://${host}:${port}`;
+        const { command, args } = resolveRuntimeCommand(this.#options);
+        const cwd = this.#options.cwd || process.cwd();
+        const runtimePortEnvVar =
+          this.#options.runtimePortEnvVar ?? DEFAULT_RUNTIME_PORT_ENV_VAR;
 
-      const child = execa(command, args, {
-        cwd,
-        env: {
-          ...process.env,
-          ...(this.#options.env ?? {}),
-          [runtimePortEnvVar]: String(port),
-        },
-        stdio: ["ignore", "pipe", "pipe"],
-      });
+        const child = execa(command, args, {
+          cwd,
+          env: {
+            ...process.env,
+            ...(this.#options.env ?? {}),
+            [runtimePortEnvVar]: String(port),
+          },
+          stdio: ["ignore", "pipe", "pipe"],
+        });
 
-      this.#child = child;
-      this.setStatus({
-        phase: "starting",
-        url,
-        pid: child.pid ?? null,
-        startedAt: Date.now(),
-        lastError: null,
-      });
+        this.#child = child;
+        this.setStatus({
+          phase: "starting",
+          url,
+          pid: child.pid ?? null,
+          startedAt: Date.now(),
+          lastError: null,
+        });
 
-      child.on("exit", () => {
-        if (this.#status.phase === "stopping") {
+        child.on("exit", () => {
+          if (this.#status.phase === "stopping") {
+            this.setStatus({
+              phase: "stopped",
+              url: null,
+              pid: null,
+              startedAt: null,
+              lastError: null,
+            });
+            return;
+          }
+
           this.setStatus({
-            phase: "stopped",
+            phase: "error",
             url: null,
             pid: null,
             startedAt: null,
-            lastError: null,
+            lastError: this.#status.lastError || "Runtime exited unexpectedly",
           });
-          return;
+        });
+
+        child.catch((error) => {
+          this.setStatus({
+            phase: "error",
+            url: null,
+            pid: null,
+            startedAt: null,
+            lastError: error instanceof Error ? error.message : String(error),
+          });
+        });
+
+        try {
+          await waitForHealth(
+            url,
+            this.#options.healthPath ?? DEFAULT_HEALTH_PATH,
+            this.#options.startTimeoutMs ?? DEFAULT_START_TIMEOUT_MS,
+          );
+        } catch (error) {
+          await this.stop();
+          const message =
+            error instanceof Error
+              ? error.message
+              : "Runtime health check failed";
+          this.setStatus({
+            phase: "error",
+            url: null,
+            pid: null,
+            startedAt: null,
+            lastError: message,
+          });
+          throw new Error(message, { cause: error });
         }
 
         this.setStatus({
-          phase: "error",
-          url: null,
-          pid: null,
-          startedAt: null,
-          lastError: this.#status.lastError || "Runtime exited unexpectedly",
-        });
-      });
-
-      child.catch((error) => {
-        this.setStatus({
-          phase: "error",
-          url: null,
-          pid: null,
-          startedAt: null,
-          lastError: error instanceof Error ? error.message : String(error),
-        });
-      });
-
-      try {
-        await waitForHealth(
+          phase: "running",
           url,
-          this.#options.healthPath ?? DEFAULT_HEALTH_PATH,
-          this.#options.startTimeoutMs ?? DEFAULT_START_TIMEOUT_MS,
-        );
-      } catch (error) {
-        await this.stop();
-        const message =
-          error instanceof Error
-            ? error.message
-            : "Runtime health check failed";
-        this.setStatus({
-          phase: "error",
-          url: null,
-          pid: null,
-          startedAt: null,
-          lastError: message,
+          pid: child.pid ?? null,
+          startedAt: this.#status.startedAt ?? Date.now(),
+          lastError: null,
         });
-        throw new Error(message, { cause: error });
+
+        return this.getStatus();
+      } catch (error) {
+        if (this.#status.phase !== "error") {
+          const message =
+            error instanceof Error ? error.message : String(error);
+          this.setStatus({
+            phase: "error",
+            url: null,
+            pid: null,
+            startedAt: null,
+            lastError: message,
+          });
+        }
+        throw error;
       }
-
-      this.setStatus({
-        phase: "running",
-        url,
-        pid: child.pid ?? null,
-        startedAt: this.#status.startedAt ?? Date.now(),
-        lastError: null,
-      });
-
-      return this.getStatus();
     })();
 
     try {

@@ -58,7 +58,11 @@ export class BridgeSocketBridge {
     this.#capabilities = createCapabilities(
       this.#options.fallbackCommand,
       support.hasRuntimeControl,
-      support.hasRuntimeControl ? "helper" : "host",
+      support.hasRuntimeControl
+        ? this.#options.fallbackCommand.trim()
+          ? "hybrid"
+          : "helper"
+        : "host",
     );
     this.#autoStartEnabled = this.#options.autoStart;
     this.#eventBus = new BridgeEventBus(this.#options.eventHeartbeatIntervalMs);
@@ -79,6 +83,7 @@ export class BridgeSocketBridge {
       transportState: toTransportState(runtime),
       runtime,
       capabilities: this.#capabilities,
+      ...(runtime.lastError ? { error: runtime.lastError } : {}),
     };
   }
 
@@ -103,7 +108,7 @@ export class BridgeSocketBridge {
     });
 
     server.httpServer?.on("close", () => {
-      void this.close();
+      this.close().catch(() => {});
     });
   }
   async attachVite(server: BridgeMiddlewareServer): Promise<void> {

@@ -26,6 +26,8 @@ export function handleBridgeUpgrade(
   context: BridgeUpgradeContext,
 ): void {
   if (!isEventsUpgradePath(req.url || "/", context.bridgePathPrefix)) {
+    // Prevent unhandled socket errors if no other listener claims this socket
+    socket.once("error", () => {});
     return;
   }
 
@@ -49,7 +51,11 @@ export function handleBridgeUpgrade(
         context.eventBus.createRuntimeStatusEvent(context.getRuntimeStatus()),
       ),
     );
-    void pipeRuntimeEvents(ws, context);
+    pipeRuntimeEvents(ws, context).catch((error) => {
+      context.eventBus.emitRuntimeError(
+        error instanceof Error ? error.message : String(error),
+      );
+    });
   });
 }
 

@@ -12,26 +12,31 @@ export function createBridgeSocketNuxtModule(
 ) {
   const resolvedOptions = resolveAdapterOptions(options);
 
-  return {
-    meta: {
-      name: resolvedOptions.adapterName,
-      configKey: "bridgeSocket",
-    },
-    setup: (_moduleOptions: unknown, nuxt: Record<string, unknown>) => {
-      const nuxtOptions = (nuxt.options || {}) as { dev?: boolean };
-      if (!nuxtOptions.dev) return;
-
-      const hook = (nuxt.hook || (() => undefined)) as (
-        name: string,
-        callback: (...args: unknown[]) => void,
-      ) => void;
-
-      hook("vite:extendConfig", ((config: { plugins?: unknown[] }) => {
-        config.plugins = appendPlugin(
-          config.plugins,
-          createBridgeSocketVitePlugin(resolvedOptions),
-        );
-      }) as (...args: unknown[]) => void);
-    },
+  const meta = {
+    name: resolvedOptions.adapterName,
+    configKey: "bridgeSocket",
   };
+
+  function setup(_moduleOptions: unknown, nuxt: Record<string, unknown>) {
+    const nuxtOptions = (nuxt.options || {}) as { dev?: boolean };
+    if (!nuxtOptions.dev) return;
+
+    const hook = (nuxt.hook || (() => undefined)) as (
+      name: string,
+      callback: (...args: unknown[]) => void,
+    ) => void;
+
+    hook("vite:extendConfig", ((
+      config: { plugins?: unknown[] },
+      env: { isClient?: boolean },
+    ) => {
+      if (env?.isClient === false) return;
+      config.plugins = appendPlugin(
+        config.plugins,
+        createBridgeSocketVitePlugin(resolvedOptions),
+      );
+    }) as (...args: unknown[]) => void);
+  }
+
+  return Object.assign(setup, { meta });
 }
