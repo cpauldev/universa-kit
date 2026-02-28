@@ -53,7 +53,7 @@ interface UniversaBunSocketState {
 }
 
 interface UniversaBunSocketData {
-  __universaKit?: UniversaBunSocketState;
+  __universa?: UniversaBunSocketState;
 }
 
 type WebSocketPayload = string | ArrayBuffer | Blob | Uint8Array;
@@ -159,7 +159,7 @@ export async function attachUniversaToBunServe(
         const pathWithSearch = `${url.pathname}${url.search}`;
         const upgraded = server.upgrade(request, {
           data: {
-            __universaKit: {
+            __universa: {
               upstreamUrl: toWebSocketUrl(bridgeServer.baseUrl, pathWithSearch),
               upstream: null,
             },
@@ -194,7 +194,7 @@ export async function attachUniversaToBunServe(
   ): BunServeWebSocketHandlers<Data> => {
     return {
       open: (socket) => {
-        const bridgeSocketData = socket.data.__universaKit;
+        const bridgeSocketData = socket.data.__universa;
         if (!bridgeSocketData) {
           existing.open?.(socket);
           return;
@@ -219,7 +219,7 @@ export async function attachUniversaToBunServe(
         });
       },
       message: (socket, message) => {
-        const bridgeSocketData = socket.data.__universaKit;
+        const bridgeSocketData = socket.data.__universa;
         if (!bridgeSocketData) {
           existing.message?.(socket, message);
           return;
@@ -232,7 +232,7 @@ export async function attachUniversaToBunServe(
         upstream.send(normalizeWebSocketMessage(message));
       },
       close: (socket, code, reason) => {
-        const bridgeSocketData = socket.data.__universaKit;
+        const bridgeSocketData = socket.data.__universa;
         if (!bridgeSocketData) {
           existing.close?.(socket, code, reason);
           return;
@@ -242,7 +242,7 @@ export async function attachUniversaToBunServe(
         bridgeSocketData.upstream = null;
       },
       error: (socket, error) => {
-        const bridgeSocketData = socket.data.__universaKit;
+        const bridgeSocketData = socket.data.__universa;
         if (!bridgeSocketData) {
           existing.error?.(socket, error);
           return;

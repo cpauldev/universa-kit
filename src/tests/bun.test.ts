@@ -57,9 +57,9 @@ describe("bun adapter", () => {
     expect(upgradeResponse).toBeUndefined();
     expect(upgrades.length).toBe(1);
     const upgradeData = upgrades[0] as {
-      __universaKit: { upstreamUrl: string };
+      __universa: { upstreamUrl: string };
     };
-    expect(upgradeData.__universaKit.upstreamUrl).toBe(
+    expect(upgradeData.__universa.upstreamUrl).toBe(
       `${handle.baseUrl.replace("http://", "ws://")}/__universa/events?source=ui`,
     );
 
