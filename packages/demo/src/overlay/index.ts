@@ -1,7 +1,49 @@
 import { OVERLAY_DISABLE_KEY } from "./constants.js";
-import { isBrowserRuntime, isDevLikeEnvironment } from "./mount-policy.js";
 import { DemoOverlay } from "./overlay.js";
 import type { OverlayMountOptions } from "./types.js";
+
+// ── Mount policy ─────────────────────────────────────────────────────────────
+
+function isBrowserRuntime(): boolean {
+  return typeof window !== "undefined" && typeof document !== "undefined";
+}
+
+function isLikelyLocalHost(hostname: string): boolean {
+  if (!hostname) return false;
+  if (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "::1"
+  )
+    return true;
+  if (hostname.endsWith(".local") || hostname.endsWith(".localhost"))
+    return true;
+
+  const ipv4 = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (!ipv4) return false;
+
+  const [a, b] = ipv4.slice(1).map(Number);
+  return (
+    a === 10 ||
+    a === 127 ||
+    (a === 192 && b === 168) ||
+    (a === 172 && b >= 16 && b <= 31)
+  );
+}
+
+function isDevLikeEnvironment(): boolean {
+  if (!isBrowserRuntime()) return false;
+
+  const env =
+    typeof process !== "undefined" ? process.env?.NODE_ENV : undefined;
+  if (env === "development" || env === "test") return true;
+  if (env && env !== "development" && env !== "test") return false;
+
+  if (isLikelyLocalHost(window.location.hostname)) return true;
+  return window.location.search.includes("demoOverlay=1");
+}
+
+// ── Instance management ───────────────────────────────────────────────────────
 
 interface OverlayInstanceLike {
   mount(): void;
@@ -12,7 +54,6 @@ declare global {
   interface Window {
     __DEMO_OVERLAY_DISABLED__?: boolean;
     __DEMO_OVERLAY_ENABLED__?: boolean;
-    __DEMO_OVERLAY_STYLE_NONCE__?: string;
     __DEMO_OVERLAY_INSTANCE__?: OverlayInstanceLike | null;
   }
 }
@@ -21,25 +62,22 @@ let overlayInstance: DemoOverlay | null = null;
 
 function getGlobalOverlayInstance(): OverlayInstanceLike | null {
   if (!isBrowserRuntime()) return overlayInstance;
-
   const globalInstance = window.__DEMO_OVERLAY_INSTANCE__ ?? null;
-  if (globalInstance && !overlayInstance) {
+  if (globalInstance && !overlayInstance)
     overlayInstance = globalInstance as DemoOverlay;
-  }
   return globalInstance;
 }
 
 function setGlobalOverlayInstance(instance: OverlayInstanceLike | null): void {
-  if (isBrowserRuntime()) {
-    window.__DEMO_OVERLAY_INSTANCE__ = instance;
-  }
+  if (isBrowserRuntime()) window.__DEMO_OVERLAY_INSTANCE__ = instance;
   overlayInstance = instance as DemoOverlay | null;
 }
+
+// ── Public API ────────────────────────────────────────────────────────────────
 
 export function shouldMountOverlay(force = false): boolean {
   if (!isBrowserRuntime()) return false;
   if (force) return true;
-
   if (window.__DEMO_OVERLAY_DISABLED__) return false;
   if (window.__DEMO_OVERLAY_ENABLED__ === true) return true;
 
@@ -65,18 +103,15 @@ export function mountOverlay(
 
   const instance = new DemoOverlay({
     baseUrl: options.baseUrl,
-    styleNonce: options.styleNonce,
     force: options.force,
   });
   instance.mount();
   setGlobalOverlayInstance(instance);
-
   return instance;
 }
 
 export function unmountOverlay(): void {
-  const existing = getGlobalOverlayInstance();
-  existing?.destroy();
+  getGlobalOverlayInstance()?.destroy();
   setGlobalOverlayInstance(null);
 }
 
@@ -89,15 +124,11 @@ export type {
   BridgeSocketRuntimeStatus,
 } from "./types.js";
 
-// ============================================================================
-// AUTO-INITIALIZATION
-// ============================================================================
-
-// Auto-mount the overlay in development environments
+// Auto-mount when imported as the adapter-injected overlay entry.
 if (isBrowserRuntime() && shouldMountOverlay()) {
   try {
     mountOverlay();
   } catch {
-    // Ignore overlay bootstrap failures to keep runtime resilient.
+    // Ignore overlay bootstrap failures.
   }
 }

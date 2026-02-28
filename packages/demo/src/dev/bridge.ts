@@ -4,8 +4,12 @@ import {
   type StandaloneBridgeServer,
   startStandaloneBridgeSocketBridgeServer,
 } from "bridgesocket";
+import { createBridgeSocketToolPreset } from "bridgesocket/preset";
 
-import { resolveDemoBridgeOptions } from "./defaults.js";
+import {
+  resolveDemoAdapterOptions,
+  resolveDemoBridgeOptions,
+} from "./defaults.js";
 
 export type DemoBridgeOptions = BridgeSocketBridgeOptions;
 export type { StandaloneBridgeServer };
@@ -16,9 +20,7 @@ export class DemoBridge extends BridgeSocketBridge {
   }
 }
 
-export async function createDemoBridge(
-  options: DemoBridgeOptions = {},
-): Promise<DemoBridge> {
+export function createDemoBridge(options: DemoBridgeOptions = {}): DemoBridge {
   return new DemoBridge(options);
 }
 
@@ -28,4 +30,8 @@ export async function startStandaloneDemoBridgeServer(
   return startStandaloneBridgeSocketBridgeServer(
     resolveDemoBridgeOptions(options),
   );
+}
+
+export function createDemoPreset(options = {}) {
+  return createBridgeSocketToolPreset(resolveDemoAdapterOptions(options));
 }

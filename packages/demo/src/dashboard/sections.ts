@@ -1,5 +1,12 @@
 import type { BridgeSocketBridgeState } from "bridgesocket";
 
+import {
+  formatBytes,
+  formatDate,
+  formatPhase,
+  formatTransportState,
+  formatUptime,
+} from "../overlay/format.js";
 import type { FileMetadata } from "../overlay/types.js";
 import type {
   DashboardActionId,
@@ -38,7 +45,7 @@ function areStringArraysEqual(
   return true;
 }
 
-export function areBridgeStatesEqual(
+function areBridgeStatesEqual(
   a: BridgeSocketBridgeState | null,
   b: BridgeSocketBridgeState | null,
 ): boolean {
@@ -177,34 +184,6 @@ function pushRow(
   rows.push({ key, label, value });
 }
 
-function formatTransportState(state: string): string {
-  return state.replace(/_/g, " ");
-}
-
-export function formatDate(ms: number): string {
-  return new Date(ms).toLocaleString();
-}
-
-export function formatLastUpdated(timestamp: number | null): string {
-  if (!timestamp) return "n/a";
-  return new Date(timestamp).toLocaleTimeString();
-}
-
-export function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-export function formatUptime(startedAt: number): string {
-  const seconds = Math.floor((Date.now() - startedAt) / 1000);
-  if (seconds < 60) return `${seconds}s`;
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ${seconds % 60}s`;
-  const hours = Math.floor(minutes / 60);
-  return `${hours}h ${minutes % 60}m`;
-}
-
 export function createInitialDashboardLiveState(): DashboardLiveState {
   return {
     hasBootstrapped: false,
@@ -275,29 +254,29 @@ export function resolveDashboardStatusBadge(state: DashboardLiveState): {
   variant: DashboardBadgeVariant;
 } {
   if (!state.hasBootstrapped) {
-    return { text: "connecting", variant: "warning" };
+    return { text: "Connecting", variant: "warning" };
   }
 
   if (
     state.transportState === "degraded" ||
     state.transportState === "disconnected"
   ) {
-    return { text: "closed", variant: "error" };
+    return { text: "Disconnected", variant: "error" };
   }
 
   if (state.transportState === "bridge_detecting") {
-    return { text: "detecting", variant: "warning" };
+    return { text: "Detecting", variant: "warning" };
   }
 
   if (state.transportState === "runtime_starting") {
-    return { text: "starting", variant: "warning" };
+    return { text: "Starting", variant: "warning" };
   }
 
   if (state.bridgeState?.runtime.phase === "error") {
-    return { text: "error", variant: "error" };
+    return { text: "Error", variant: "error" };
   }
 
-  return { text: "open", variant: "success" };
+  return { text: "Connected", variant: "success" };
 }
 
 export function resolveDashboardStatusSummary(
@@ -476,8 +455,8 @@ export function buildRuntimeSections(input: {
     "phase",
     "Phase",
     phase
-      ? asBadgeCell(phase, resolveRuntimePhaseBadgeVariant(phase))
-      : asTextCell("unavailable", "muted"),
+      ? asBadgeCell(formatPhase(phase), resolveRuntimePhaseBadgeVariant(phase))
+      : asTextCell("Unavailable", "muted"),
   );
   if (runtime?.pid) {
     pushRow(runtimeRows, "pid", "PID", asTextCell(String(runtime.pid), "code"));

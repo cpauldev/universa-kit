@@ -3,6 +3,7 @@ import type {
   RuntimeHelperOptions,
 } from "bridgesocket";
 import type { BridgeSocketAdapterOptions } from "bridgesocket/internal";
+import { existsSync } from "fs";
 import { basename, dirname, join } from "path";
 import { fileURLToPath } from "url";
 
@@ -27,7 +28,12 @@ type DemoBridgeOptions = BridgeSocketBridgeOptions & {
 
 function resolveDemoRuntimeScript(): string {
   const currentDir = dirname(fileURLToPath(import.meta.url));
-  // From dist/dev/, go up to dist/, then find runtime/server.js
+  // Support both preserved-module output (dist/dev/defaults.js) and bundled output (dist/index.js).
+  const bundledOutputPath = join(currentDir, "runtime", "server.js");
+  if (existsSync(bundledOutputPath)) {
+    return bundledOutputPath;
+  }
+
   return join(currentDir, "..", "runtime", "server.js");
 }
 
@@ -39,8 +45,13 @@ function resolveCommand(
     return { command, args: args ?? [] };
   }
 
+  const defaultCommand =
+    typeof process !== "undefined" && process.versions?.bun && process.execPath
+      ? process.execPath
+      : "bun";
+
   return {
-    command: "bun",
+    command: defaultCommand,
     args: args ?? [resolveDemoRuntimeScript()],
   };
 }

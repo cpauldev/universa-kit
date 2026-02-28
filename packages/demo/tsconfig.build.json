@@ -8,8 +8,9 @@
     "declarationMap": true,
     "sourceMap": true,
     "types": ["node", "bun-types", "react", "react-dom"],
-    "noEmit": false
+    "noEmit": false,
+    "jsx": "react-jsx"
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["node_modules", "dist"]
 }

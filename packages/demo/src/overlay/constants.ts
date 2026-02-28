@@ -4,7 +4,9 @@ import type {
   TabDefinition,
 } from "./types.js";
 
-export const OVERLAY_HOST_ID = "demo-overlay";
+export const OVERLAY_HOST_ID = "overlay-host";
+export const OVERLAY_MOUNT_ROOT_ATTRIBUTE = "data-overlay-root";
+export const OVERLAY_MOUNT_ROOT_SELECTOR = `#${OVERLAY_HOST_ID} [${OVERLAY_MOUNT_ROOT_ATTRIBUTE}="true"]`;
 export const OVERLAY_STORAGE_KEY = "demo:overlay:settings";
 export const OVERLAY_DISABLE_KEY = "demo:overlay:disabled";
 export const BRIDGE_BASE_PATH = "/__demo";

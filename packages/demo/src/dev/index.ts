@@ -1,7 +1,7 @@
-export { createDemoPreset } from "./preset.js";
 export {
   DemoBridge,
   createDemoBridge,
+  createDemoPreset,
   startStandaloneDemoBridgeServer,
 } from "./bridge.js";
 export * from "./defaults.js";

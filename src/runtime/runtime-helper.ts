@@ -233,11 +233,14 @@ export class RuntimeHelper {
             this.#options.startTimeoutMs ?? DEFAULT_START_TIMEOUT_MS,
           );
         } catch (error) {
+          const preStopError = this.#status.lastError;
           await this.stop();
           const message =
-            error instanceof Error
+            preStopError ||
+            this.#status.lastError ||
+            (error instanceof Error
               ? error.message
-              : "Runtime health check failed";
+              : "Runtime health check failed");
           this.setStatus({
             phase: "error",
             url: null,

@@ -171,7 +171,6 @@ export interface DashboardDiscoveryConfig {
 export interface DashboardControllerOptions {
   api?: DemoApi;
   baseUrl?: string;
-  currentFrameworkId?: DashboardFrameworkId;
   livePollIntervalMs?: number;
   loadFilesOnStart?: boolean;
   enableDiscovery?: boolean;

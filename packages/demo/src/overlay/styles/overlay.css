@@ -1,0 +1,639 @@
+@import "tailwindcss";
+
+/* Limit utility generation to overlay files that use worldality UI classes. */
+@source "../OverlayPanel.tsx";
+@source "../ui/**/*.tsx";
+
+/* Dark mode scoped to the overlay mount container so portaled popups inherit it too. */
+@custom-variant dark ([data-overlay-root="true"][data-theme=dark] &);
+
+/*
+  Semantic color tokens used by the worldality UI components.
+  Light-mode defaults live here. Dark mode overrides are in .overlay-root[data-theme="dark"].
+*/
+@theme {
+  --font-sans:
+    Inter, ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  --radius: 0.625rem;
+  --color-background: rgb(255 255 255);
+  --color-foreground: oklch(0.141 0.005 285.823);
+  --color-muted-foreground: oklch(0.552 0.016 285.938);
+  --color-border: oklch(0.92 0.004 286.32);
+  --color-input: oklch(0.92 0.004 286.32);
+  --color-primary: oklch(0.21 0.006 285.885);
+  --color-primary-foreground: oklch(0.985 0 0);
+  --color-secondary: oklch(0.967 0.001 286.375);
+  --color-secondary-foreground: oklch(0.21 0.006 285.885);
+  --color-accent: oklch(0.967 0.001 286.375);
+  --color-accent-foreground: oklch(0.21 0.006 285.885);
+  --color-ring: oklch(0.705 0.015 286.067);
+  --color-popover: rgb(255 255 255);
+  --color-popover-foreground: oklch(0.141 0.005 285.823);
+  --color-destructive: oklch(0.577 0.245 27.325);
+  --color-destructive-foreground: oklch(0.505 0.213 27.518);
+  --color-info: oklch(0.623 0.214 259.815);
+  --color-info-foreground: oklch(0.488 0.243 264.376);
+  --color-success: oklch(0.696 0.17 162.48);
+  --color-success-foreground: oklch(0.508 0.118 165.612);
+  --color-warning: oklch(0.769 0.188 70.08);
+  --color-warning-foreground: oklch(0.555 0.163 48.998);
+  --color-sidebar: oklch(0.985 0 0);
+  --color-sidebar-foreground: oklch(0.141 0.005 285.823);
+  --color-sidebar-primary: oklch(0.21 0.006 285.885);
+  --color-sidebar-primary-foreground: oklch(0.985 0 0);
+  --color-sidebar-accent: oklch(0.967 0.001 286.375);
+  --color-sidebar-accent-foreground: oklch(0.21 0.006 285.885);
+  --color-sidebar-border: oklch(0.92 0.004 286.32);
+  --color-sidebar-ring: oklch(0.705 0.015 286.067);
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+}
+
+/* =========================================================
+   Sileo width + position override
+   =========================================================
+   Sileo's JS hardcodes its geometry to --sileo-native-width (350px).
+   We override --sileo-width to widen the toast, then compensate:
+
+   1. Scale the SVG background (centered on its own axis so
+      it stays within the toast bounds).
+   2. Set --_px for the header label based on data-overlay-position
+      (left/center/right suffix).  JS computes --_px from 350px;
+      we override it per position in the wider 980px space.
+   3. Counteract the SVG scale on the pill rect so it keeps
+      its natural screen width, and translate it to the correct
+      horizontal edge (left/center/right).
+   4. For top-* positions, flip the expand direction so the
+      content panel opens downward instead of upward.
+*/
+[data-sileo-viewport] [data-sileo-toast] {
+  --sileo-native-width: 350px; /* sileo's internal JS width constant */
+  --sileo-native-pill-width: 95px; /* sileo's --_pw fallback */
+  --sileo-native-radius: 16px; /* sileo's SVG rect rx/ry */
+  --sileo-width: min(980px, 100vw - 24px);
+  --overlay-height: 600px; /* content height */
+}
+
+[data-sileo-svg] {
+  display: block;
+  margin-inline: auto;
+  transform-origin: center top;
+  transform: scaleX(calc(var(--sileo-width) / var(--sileo-native-width)));
+}
+
+[data-sileo-toast] {
+  cursor: default !important;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.15));
+  transition: filter 0.3s ease;
+}
+
+[data-sileo-toast]:not([data-expanded="true"]) {
+  pointer-events: none !important;
+}
+
+[data-sileo-toast]:not([data-expanded="true"]) [data-sileo-header] {
+  pointer-events: auto;
+}
+
+[data-sileo-header] {
+  cursor: pointer;
+}
+
+[data-sileo-toast][data-expanded="true"] {
+  filter: drop-shadow(0 12px 40px rgba(0, 0, 0, 0.28));
+}
+
+/* Avoid hover flicker loops when entering description content:
+   keep height changes immediate so the hover hitbox matches content size. */
+[data-sileo-toast][data-ready="true"] {
+  transition-property: transform, opacity, margin-bottom, margin-top !important;
+}
+
+/* Disable only the horizontal slide (left) and pill-resize (max-width)
+   transitions on the header — the open/close expand uses transform which
+   we intentionally keep. */
+[data-sileo-toast][data-ready="true"] [data-sileo-header] {
+  transition: transform var(--sileo-duration) var(--sileo-spring-easing) !important;
+}
+
+[data-sileo-body] {
+  rx: calc(
+    var(--sileo-native-radius) * var(--sileo-native-width) / var(--sileo-width)
+  );
+}
+
+/*
+  Pill label position (--_px) and pill SVG shape (data-sileo-pill) per horizontal alignment.
+
+  The Sileo JS always thinks position="bottom-right" (pill at right), so it sets
+  --_px and animates the pill SVG to the right edge in 350px coords. We override
+  both to place the pill at the correct edge in our 980px-wide toast.
+
+  Derivation (SVG pill at x=0 with transform-box:fill-box origin at pill center 47.5px):
+    visual_screen_center = (translateX + 47.5) * (sileo-width / native-width)
+  Solving for translateX:
+    left   → visual center = 47.5px  → t = 47.5*(native/width - 1)
+    center → visual center = width/2 → t = (native - pill) / 2
+    right  → visual center = width - 47.5 → t = native - 47.5*(1 + native/width)
+*/
+/* left */
+[data-overlay-root="true"][data-overlay-position$="left"] [data-sileo-toast] {
+  --_px: 0px !important;
+}
+[data-overlay-root="true"][data-overlay-position$="left"] [data-sileo-pill] {
+  transform: translateX(
+      calc(
+        var(--sileo-native-pill-width) / 2 *
+          (var(--sileo-native-width) / var(--sileo-width) - 1)
+      )
+    )
+    scaleX(calc(var(--sileo-native-width) / var(--sileo-width))) !important;
+  transform-origin: 50% 50%;
+  transform-box: fill-box;
+}
+
+/* center */
+[data-overlay-root="true"][data-overlay-position$="center"] [data-sileo-toast] {
+  --_px: calc(
+    (var(--sileo-width) - var(--_pw, var(--sileo-native-pill-width))) / 2
+  ) !important;
+}
+[data-overlay-root="true"][data-overlay-position$="center"] [data-sileo-pill] {
+  transform: translateX(
+      calc((var(--sileo-native-width) - var(--sileo-native-pill-width)) / 2)
+    )
+    scaleX(calc(var(--sileo-native-width) / var(--sileo-width))) !important;
+  transform-origin: 50% 50%;
+  transform-box: fill-box;
+}
+
+/* right */
+[data-overlay-root="true"][data-overlay-position$="right"] [data-sileo-toast] {
+  --_px: calc(
+    var(--sileo-width) - var(--_pw, var(--sileo-native-pill-width))
+  ) !important;
+}
+[data-overlay-root="true"][data-overlay-position$="right"] [data-sileo-pill] {
+  transform: translateX(
+      calc(
+        var(--sileo-native-width) - var(--sileo-native-pill-width) / 2 *
+          (1 + var(--sileo-native-width) / var(--sileo-width))
+      )
+    )
+    scaleX(calc(var(--sileo-native-width) / var(--sileo-width))) !important;
+  transform-origin: 50% 50%;
+  transform-box: fill-box;
+}
+
+/*
+  Blob fill colour driven by data-theme.
+
+  Framer Motion animates the SVG fill via inline style, so !important is needed
+  to override it.  The initial fill is also set in sileo.info() to the same
+  value, but CSS takes over for all subsequent theme changes without requiring
+  any JS store updates.
+*/
+[data-overlay-root="true"][data-theme="light"] [data-sileo-pill],
+[data-overlay-root="true"][data-theme="light"] [data-sileo-body] {
+  fill: white !important;
+}
+[data-overlay-root="true"][data-theme="dark"] [data-sileo-pill],
+[data-overlay-root="true"][data-theme="dark"] [data-sileo-body] {
+  fill: black !important;
+}
+
+/*
+  Expand direction override for top-* positions.
+
+  Sileo always thinks expand="top" (data-edge="top" on all elements), which puts
+  the pill header at the bottom and opens content upward — correct for bottom-*
+  positions.  For top-* positions we flip: header at top, content below.
+*/
+[data-overlay-root="true"][data-overlay-position^="top"]
+  [data-sileo-canvas][data-edge="top"] {
+  bottom: unset !important;
+  top: 0 !important;
+  transform: translateZ(0) !important; /* remove the scaleY(-1) flip */
+}
+[data-overlay-root="true"][data-overlay-position^="top"]
+  [data-sileo-content][data-edge="top"] {
+  top: var(--sileo-height) !important; /* content below the pill header */
+}
+[data-overlay-root="true"][data-overlay-position^="top"]
+  [data-sileo-header][data-edge="top"] {
+  bottom: unset !important;
+  top: 0 !important;
+}
+
+/* =========================================================
+   Sileo viewport position override
+   The Sileo JS always uses position="bottom-right" so the toast stays in a
+   single stable viewport container and never dismisses on position changes.
+   We drive the actual screen corner by setting data-overlay-position on the
+   mount root and overriding the viewport's fixed position here.
+*/
+[data-overlay-root="true"] [data-sileo-viewport] {
+  top: unset !important;
+  bottom: unset !important;
+  left: unset !important;
+  right: unset !important;
+  transform: unset !important;
+  align-items: unset !important;
+  flex-direction: unset !important;
+}
+
+[data-overlay-root="true"][data-overlay-position^="top"] [data-sileo-viewport] {
+  top: 0 !important;
+  flex-direction: column-reverse !important;
+}
+[data-overlay-root="true"][data-overlay-position^="bottom"]
+  [data-sileo-viewport] {
+  bottom: 0 !important;
+  flex-direction: column !important;
+}
+[data-overlay-root="true"][data-overlay-position$="left"]
+  [data-sileo-viewport] {
+  left: 0 !important;
+  align-items: flex-start !important;
+}
+[data-overlay-root="true"][data-overlay-position$="right"]
+  [data-sileo-viewport] {
+  right: 0 !important;
+  align-items: flex-end !important;
+}
+[data-overlay-root="true"][data-overlay-position$="center"]
+  [data-sileo-viewport] {
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  align-items: center !important;
+}
+
+/* =========================================================
+   Sileo behavior overrides
+*/
+[data-sileo-viewport] [data-sileo-description] {
+  display: block;
+  padding: 0 !important;
+  color: inherit;
+  content-visibility: visible;
+  min-height: var(--overlay-height) !important;
+  height: 100%;
+  cursor: default;
+}
+
+[data-sileo-viewport] [data-sileo-content][data-visible="true"] {
+  height: calc(var(--_h, var(--sileo-height)) - var(--sileo-height));
+}
+
+/* =========================================================
+   Overlay theme tokens
+*/
+[data-overlay-root="true"] {
+  --overlay-radius: 0.625rem;
+  --overlay-background: rgb(255 255 255);
+  --overlay-foreground: oklch(0.141 0.005 285.823);
+  --overlay-popover: rgb(255 255 255);
+  --overlay-popover-foreground: oklch(0.141 0.005 285.823);
+  --overlay-primary: oklch(0.21 0.006 285.885);
+  --overlay-primary-foreground: oklch(0.985 0 0);
+  --overlay-secondary: oklch(0.967 0.001 286.375);
+  --overlay-secondary-foreground: oklch(0.21 0.006 285.885);
+  --overlay-muted-foreground: oklch(0.552 0.016 285.938);
+  --overlay-accent: oklch(0.967 0.001 286.375);
+  --overlay-accent-foreground: oklch(0.21 0.006 285.885);
+  --overlay-destructive: oklch(0.577 0.245 27.325);
+  --overlay-destructive-foreground: oklch(0.505 0.213 27.518);
+  --overlay-border: oklch(0.92 0.004 286.32);
+  --overlay-input: oklch(0.92 0.004 286.32);
+  --overlay-ring: oklch(0.705 0.015 286.067);
+  --overlay-info: oklch(0.623 0.214 259.815);
+  --overlay-info-foreground: oklch(0.488 0.243 264.376);
+  --overlay-success: oklch(0.696 0.17 162.48);
+  --overlay-success-foreground: oklch(0.508 0.118 165.612);
+  --overlay-warning: oklch(0.769 0.188 70.08);
+  --overlay-warning-foreground: oklch(0.555 0.163 48.998);
+  --overlay-sidebar: oklch(0.985 0 0);
+  --overlay-sidebar-foreground: oklch(0.141 0.005 285.823);
+  --overlay-sidebar-primary: oklch(0.21 0.006 285.885);
+  --overlay-sidebar-primary-foreground: oklch(0.985 0 0);
+  --overlay-sidebar-accent: oklch(0.967 0.001 286.375);
+  --overlay-sidebar-accent-foreground: oklch(0.21 0.006 285.885);
+  --overlay-sidebar-border: oklch(0.92 0.004 286.32);
+  --overlay-sidebar-ring: oklch(0.705 0.015 286.067);
+
+  --radius: var(--overlay-radius);
+  --color-background: var(--overlay-background);
+  --color-foreground: var(--overlay-foreground);
+  --color-muted-foreground: var(--overlay-muted-foreground);
+  --color-border: var(--overlay-border);
+  --color-input: var(--overlay-input);
+  --color-primary: var(--overlay-primary);
+  --color-primary-foreground: var(--overlay-primary-foreground);
+  --color-secondary: var(--overlay-secondary);
+  --color-secondary-foreground: var(--overlay-secondary-foreground);
+  --color-accent: var(--overlay-accent);
+  --color-accent-foreground: var(--overlay-accent-foreground);
+  --color-ring: var(--overlay-ring);
+  --color-popover: var(--overlay-popover);
+  --color-popover-foreground: var(--overlay-popover-foreground);
+  --color-destructive: var(--overlay-destructive);
+  --color-destructive-foreground: var(--overlay-destructive-foreground);
+  --color-info: var(--overlay-info);
+  --color-info-foreground: var(--overlay-info-foreground);
+  --color-success: var(--overlay-success);
+  --color-success-foreground: var(--overlay-success-foreground);
+  --color-warning: var(--overlay-warning);
+  --color-warning-foreground: var(--overlay-warning-foreground);
+  --sidebar: var(--overlay-sidebar);
+  --sidebar-foreground: var(--overlay-sidebar-foreground);
+  --sidebar-primary: var(--overlay-sidebar-primary);
+  --sidebar-primary-foreground: var(--overlay-sidebar-primary-foreground);
+  --sidebar-accent: var(--overlay-sidebar-accent);
+  --sidebar-accent-foreground: var(--overlay-sidebar-accent-foreground);
+  --sidebar-border: var(--overlay-sidebar-border);
+  --sidebar-ring: var(--overlay-sidebar-ring);
+  --color-sidebar: var(--overlay-sidebar);
+  --color-sidebar-foreground: var(--overlay-sidebar-foreground);
+  --color-sidebar-primary: var(--overlay-sidebar-primary);
+  --color-sidebar-primary-foreground: var(--overlay-sidebar-primary-foreground);
+  --color-sidebar-accent: var(--overlay-sidebar-accent);
+  --color-sidebar-accent-foreground: var(--overlay-sidebar-accent-foreground);
+  --color-sidebar-border: var(--overlay-sidebar-border);
+  --color-sidebar-ring: var(--overlay-sidebar-ring);
+  color-scheme: light;
+  color: var(--color-foreground);
+}
+
+[data-overlay-root="true"][data-theme="dark"] {
+  color-scheme: dark;
+  --overlay-background: oklch(0.051 0.005 285.823);
+  --overlay-foreground: oklch(0.985 0 0);
+  --overlay-popover: oklch(0.12 0.006 285.885);
+  --overlay-popover-foreground: oklch(0.985 0 0);
+  --overlay-primary: oklch(0.92 0.004 286.32);
+  --overlay-primary-foreground: oklch(0.12 0.006 285.885);
+  --overlay-secondary: oklch(0.184 0.006 286.033);
+  --overlay-secondary-foreground: oklch(0.985 0 0);
+  --overlay-muted-foreground: oklch(0.705 0.015 286.067);
+  --overlay-accent: rgb(255 255 255 / 0.0588);
+  --overlay-accent-foreground: oklch(0.985 0 0);
+  --overlay-destructive: oklch(0.704 0.191 22.216);
+  --overlay-destructive-foreground: oklch(0.704 0.191 22.216);
+  --overlay-border: oklch(1 0 0 / 10%);
+  --overlay-input: oklch(1 0 0 / 15%);
+  --overlay-ring: oklch(0.552 0.016 285.938);
+  --overlay-info: oklch(0.623 0.214 259.815);
+  --overlay-info-foreground: oklch(0.707 0.165 254.624);
+  --overlay-success: oklch(0.696 0.17 162.48);
+  --overlay-success-foreground: oklch(0.765 0.177 163.223);
+  --overlay-warning: oklch(0.769 0.188 70.08);
+  --overlay-warning-foreground: oklch(0.828 0.189 84.429);
+  --overlay-sidebar: oklch(0.12 0.006 285.885);
+  --overlay-sidebar-foreground: oklch(0.985 0 0);
+  --overlay-sidebar-primary: oklch(0.488 0.243 264.376);
+  --overlay-sidebar-primary-foreground: oklch(0.985 0 0);
+  --overlay-sidebar-accent: oklch(0.184 0.006 286.033);
+  --overlay-sidebar-accent-foreground: oklch(0.985 0 0);
+  --overlay-sidebar-border: oklch(1 0 0 / 10%);
+  --overlay-sidebar-ring: oklch(0.552 0.016 285.938);
+}
+
+[data-overlay-root="true"] *,
+[data-overlay-root="true"] *::before,
+[data-overlay-root="true"] *::after {
+  border-color: var(--color-border);
+}
+
+/* Badge variants use border-transparent in the base class, but the blanket
+   border-color rule above has higher specificity ([attr] * > .class).
+   Reset non-outline badges to transparent; outline badges have .border-border
+   and are excluded from this rule, so they correctly inherit the blanket color. */
+[data-overlay-root="true"]
+  [data-slot="overlay-badge"]:where(:not(.border-border)) {
+  border-color: transparent;
+}
+
+/* =========================================================
+   Overlay layout
+*/
+.overlay-shell {
+  height: calc(var(--_h, var(--sileo-height)) - var(--sileo-height));
+  width: 100%;
+  min-height: var(--overlay-height);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  background: transparent;
+  color: var(--color-foreground);
+  font-family: inherit;
+}
+
+.overlay-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.overlay-header-title {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.overlay-header-label {
+  color: var(--color-muted-foreground);
+  font-size: 0.8125rem;
+  line-height: 1.25;
+  font-weight: 500;
+}
+
+.overlay-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+}
+
+.overlay-sidebar {
+  border-right: 1px solid var(--color-border);
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.overlay-sidebar--workspace {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.overlay-sidebar-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.overlay-main {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.overlay-body {
+  height: 100%;
+  min-height: 0;
+}
+
+.overlay-body [data-slot="overlay-scroll-area-viewport"] {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  overflow: auto !important;
+}
+
+.overlay-body [data-slot="overlay-scroll-area-viewport"] > .overlay-pane {
+  flex: 1 0 auto;
+}
+
+.overlay-nav-tabs {
+  display: grid;
+  gap: 4px;
+  padding: 8px;
+}
+
+.overlay-nav-tabs--workspace {
+  padding: 8px 8px 4px;
+}
+
+.overlay-workspace-nav {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px;
+  align-items: center;
+}
+
+.overlay-workspace-search {
+  margin-top: 4px;
+}
+
+.overlay-workspace-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 8px 8px;
+  min-height: 0;
+}
+
+.overlay-toolbar {
+  display: none;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  border-bottom: 1px solid var(--color-border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.overlay-toolbar::-webkit-scrollbar {
+  display: none;
+}
+
+@media (max-width: 639px) {
+  .overlay-shell {
+    grid-template-rows: auto auto minmax(0, 1fr);
+  }
+
+  .overlay-toolbar {
+    display: flex;
+  }
+
+  .overlay-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .overlay-sidebar {
+    display: none;
+  }
+
+  .overlay-shell[data-workspace-sidebar="true"] .overlay-layout {
+    grid-template-columns: minmax(150px, 0.8fr) minmax(0, 1.2fr);
+  }
+
+  .overlay-shell[data-workspace-sidebar="true"] .overlay-sidebar {
+    display: grid;
+  }
+
+  /* Back button is hidden on mobile; collapse the two-column nav to single column
+     so the Files heading fills the full width. */
+  .overlay-workspace-nav {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================
+   Overlay panes
+*/
+.overlay-pane {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  min-height: 100%;
+  padding: 16px;
+}
+
+.overlay-section {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.overlay-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.overlay-kv-grid {
+  display: grid;
+  gap: 6px;
+}
+
+.overlay-kv-row {
+  display: grid;
+  gap: 4px;
+  grid-template-columns: minmax(90px, 120px) 1fr;
+  align-items: baseline;
+  min-width: 0;
+}
+
+.overlay-settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.overlay-file-details {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+/* Select positioner needs maximum z-index to appear above sileo's toast. */
+[data-slot="overlay-select-positioner"],
+[data-slot="overlay-tooltip-positioner"] {
+  z-index: 2147483400 !important;
+}

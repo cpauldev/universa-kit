@@ -9,15 +9,19 @@ export {
   buildRuntimeSections,
   buildSettingsRows,
   createInitialDashboardLiveState,
-  formatBytes,
-  formatDate,
-  formatLastUpdated,
-  formatUptime,
   resolveDashboardLiveStateOnFailure,
   resolveDashboardLiveStateOnSuccess,
   resolveDashboardStatusBadge,
   resolveDashboardStatusSummary,
 } from "./sections.js";
+export {
+  formatBytes,
+  formatDate,
+  formatLastUpdated,
+  formatPhase,
+  formatTransportState,
+  formatUptime,
+} from "../overlay/format.js";
 export { createDashboardController } from "./controller.js";
 export type {
   DashboardActionId,

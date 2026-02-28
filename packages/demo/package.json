@@ -5,14 +5,12 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "bin": {
-    "demo": "./bin/demo.js"
-  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./overlay.css": "./dist/overlay.css",
     "./overlay": {
       "types": "./dist/overlay/index.d.ts",
       "default": "./dist/overlay/index.js"
@@ -27,22 +25,29 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json"
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "build:styles": "bun x @tailwindcss/cli -i src/overlay/styles/overlay.css -o dist/overlay.unscoped.css --minify && node ./scripts/scope-overlay-css.mjs",
+    "build": "bun run clean && bun run build:styles && node ./node_modules/typescript/bin/tsc -p tsconfig.build.json"
   },
   "devDependencies": {
+    "@tailwindcss/cli": "^4.1.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "bun-types": "^1.3.10",
+    "postcss": "^8.5.6",
+    "postcss-selector-parser": "^7.1.0",
+    "tailwindcss": "^4.1.0",
     "typescript": "^5.6.0"
   },
   "dependencies": {
+    "@base-ui/react": "^1.0.0",
     "bridgesocket": "file:../..",
-    "cac": "^6.7.14",
-    "enquirer": "^2.4.1",
-    "picocolors": "^1.1.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.575.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "sileo": "^0.1.5",
-    "universa-ui": "file:../../../universa-ui"
+    "tailwind-merge": "^3.0.2"
   }
 }

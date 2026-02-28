@@ -37,6 +37,7 @@ function ensureOverlayMounted(): void {
       module.mountOverlay();
     })
     .catch(() => {
+      overlayBootstrapPromise = null;
       // Ignore overlay bootstrap failures to keep dashboard runtime resilient.
     });
 }
@@ -156,18 +157,9 @@ export function createDashboardController(
   ) => {
     setState((prev) => {
       const nextWebSocket = updater(prev.websocket);
-      if (
-        nextWebSocket.status === prev.websocket.status &&
-        nextWebSocket.openedAt === prev.websocket.openedAt &&
-        nextWebSocket.mode === prev.websocket.mode &&
-        nextWebSocket.failures === prev.websocket.failures
-      ) {
+      if (areWebSocketSnapshotsEqual(prev.websocket, nextWebSocket))
         return prev;
-      }
-      return {
-        ...prev,
-        websocket: nextWebSocket,
-      };
+      return { ...prev, websocket: nextWebSocket };
     });
   };
 

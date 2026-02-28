@@ -86,11 +86,11 @@ export type OverlayAction =
   | { type: "setError"; errorMessage: string | null }
   | { type: "markSuccess"; at?: number }
   | { type: "setSettings"; settings: OverlaySettings }
-  | { type: "setFileTree"; fileTree: FileTreeNode[]; treeLoading: false }
+  | { type: "setFileTree"; fileTree: FileTreeNode[] }
   | { type: "setTreeLoading"; treeLoading: boolean }
   | { type: "setFileFilter"; fileFilter: string }
   | { type: "setSelectedFilePath"; path: string | null }
-  | { type: "setFileMetadata"; metadata: FileMetadata | null; loading: false }
+  | { type: "setFileMetadata"; metadata: FileMetadata | null }
   | { type: "setFileMetadataLoading"; loading: boolean };
 
 export interface TabDefinition {
@@ -102,7 +102,6 @@ export interface TabDefinition {
 
 export interface OverlayMountOptions {
   baseUrl?: string;
-  styleNonce?: string;
   force?: boolean;
 }
 
