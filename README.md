@@ -110,32 +110,32 @@ export default defineConfig({
 
 ## Integration surfaces
 
-| Host setup | Import path |
-| --- | --- |
-| Vite-based dev servers (React, Vue, Solid, SvelteKit, Remix, TanStack Start, Vinext, etc.) | `universa-kit/vite` |
-| Next.js | `universa-kit/next` |
-| Nuxt | `universa-kit/nuxt` |
-| Astro | `universa-kit/astro` |
-| Angular CLI proxy flow | `universa-kit/angular/cli` |
-| `Bun.serve` | `universa-kit/bun` |
-| Node middleware + HTTP server | `universa-kit/node` |
-| Fastify | `universa-kit/fastify` |
-| Hono on Node server | `universa-kit/hono` |
-| webpack-dev-server | `universa-kit/webpack` |
-| Rsbuild dev server | `universa-kit/rsbuild` |
-| Rspack dev server | `universa-kit/rspack` |
+| Host setup                                                                                 | Import path                |
+| ------------------------------------------------------------------------------------------ | -------------------------- |
+| Vite-based dev servers (React, Vue, Solid, SvelteKit, Remix, TanStack Start, Vinext, etc.) | `universa-kit/vite`        |
+| Next.js                                                                                    | `universa-kit/next`        |
+| Nuxt                                                                                       | `universa-kit/nuxt`        |
+| Astro                                                                                      | `universa-kit/astro`       |
+| Angular CLI proxy flow                                                                     | `universa-kit/angular/cli` |
+| `Bun.serve`                                                                                | `universa-kit/bun`         |
+| Node middleware + HTTP server                                                              | `universa-kit/node`        |
+| Fastify                                                                                    | `universa-kit/fastify`     |
+| Hono on Node server                                                                        | `universa-kit/hono`        |
+| webpack-dev-server                                                                         | `universa-kit/webpack`     |
+| Rsbuild dev server                                                                         | `universa-kit/rsbuild`     |
+| Rspack dev server                                                                          | `universa-kit/rspack`      |
 
 ## Public API reference
 
 ### Primary exports
 
-| API | Import |
-| --- | --- |
-| `createUniversaPreset` | `universa-kit/preset` |
-| `createUniversaClient` | `universa-kit/client` |
-| `createClientRuntimeContext` | `universa-kit/client-runtime` |
-| `startStandaloneUniversaBridgeServer` | `universa-kit` |
-| `createUniversaBridge` / `UniversaBridge` | `universa-kit` |
+| API                                       | Import                        |
+| ----------------------------------------- | ----------------------------- |
+| `createUniversaPreset`                    | `universa-kit/preset`         |
+| `createUniversaClient`                    | `universa-kit/client`         |
+| `createClientRuntimeContext`              | `universa-kit/client-runtime` |
+| `startStandaloneUniversaBridgeServer`     | `universa-kit`                |
+| `createUniversaBridge` / `UniversaBridge` | `universa-kit`                |
 
 ### Adapter naming conventions
 
@@ -150,23 +150,23 @@ For expanded API coverage (including lifecycle helpers, runtime-context utilitie
 
 Most adapter APIs accept shared bridge/runtime options.
 
-| Option | Type | Default | Notes |
-| --- | --- | --- | --- |
-| `bridgePathPrefix` | `string` | `"/__universa"` | Normalized to stay rooted under `/__universa`. |
-| `autoStart` | `boolean` | `true` | Auto-start runtime on state/proxy/events paths. |
-| `command` | `string` | none | Required for managed runtime start/restart. |
-| `args` | `string[]` | `[]` | Runtime command args. |
-| `cwd` | `string` | `process.cwd()` | Runtime working directory. |
-| `env` | `Record<string, string \| undefined>` | none | Extra runtime environment variables. |
-| `host` | `string` | `"127.0.0.1"` | Runtime host binding. |
-| `healthPath` | `string` | `"/api/version"` | Runtime health probe endpoint. |
-| `startTimeoutMs` | `number` | `15000` | Runtime startup timeout. |
-| `runtimePortEnvVar` | `string` | `"UNIVERSA_RUNTIME_PORT"` | Env var populated with selected runtime port. |
-| `fallbackCommand` | `string` | `"universa dev"` | Returned in some runtime-control error payloads. |
-| `eventHeartbeatIntervalMs` | `number` | `30000` | WS heartbeat for stale client cleanup. |
-| `proxyRuntimeWebSocket` | `boolean` | `true` | Enables runtime websocket proxying through bridge events socket. |
-| `instance` | `{ id: string; label?: string }` | none | Optional instance metadata in bridge state/health. |
-| `clientModule` | `string` | none | Dev-only side-effect module injection (typically set by presets). |
+| Option                     | Type                                  | Default                   | Notes                                                             |
+| -------------------------- | ------------------------------------- | ------------------------- | ----------------------------------------------------------------- |
+| `bridgePathPrefix`         | `string`                              | `"/__universa"`           | Normalized to stay rooted under `/__universa`.                    |
+| `autoStart`                | `boolean`                             | `true`                    | Auto-start runtime on state/proxy/events paths.                   |
+| `command`                  | `string`                              | none                      | Required for managed runtime start/restart.                       |
+| `args`                     | `string[]`                            | `[]`                      | Runtime command args.                                             |
+| `cwd`                      | `string`                              | `process.cwd()`           | Runtime working directory.                                        |
+| `env`                      | `Record<string, string \| undefined>` | none                      | Extra runtime environment variables.                              |
+| `host`                     | `string`                              | `"127.0.0.1"`             | Runtime host binding.                                             |
+| `healthPath`               | `string`                              | `"/api/version"`          | Runtime health probe endpoint.                                    |
+| `startTimeoutMs`           | `number`                              | `15000`                   | Runtime startup timeout.                                          |
+| `runtimePortEnvVar`        | `string`                              | `"UNIVERSA_RUNTIME_PORT"` | Env var populated with selected runtime port.                     |
+| `fallbackCommand`          | `string`                              | `"universa dev"`          | Returned in some runtime-control error payloads.                  |
+| `eventHeartbeatIntervalMs` | `number`                              | `30000`                   | WS heartbeat for stale client cleanup.                            |
+| `proxyRuntimeWebSocket`    | `boolean`                             | `true`                    | Enables runtime websocket proxying through bridge events socket.  |
+| `instance`                 | `{ id: string; label?: string }`      | none                      | Optional instance metadata in bridge state/health.                |
+| `clientModule`             | `string`                              | none                      | Dev-only side-effect module injection (typically set by presets). |
 
 ### Preset-specific options (`createUniversaPreset`)
 

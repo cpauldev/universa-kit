@@ -6,17 +6,17 @@ This document explains the workspace examples under `examples/` and how to run/v
 
 Each example mounts the `example` package (from `packages/example`) into a framework dev server and exposes bridge routes under `/__universa/example/*`.
 
-| ID | Framework | Starting port |
-| --- | --- | --- |
-| `react` | React | 4600 |
-| `vue` | Vue | 4601 |
-| `sveltekit` | SvelteKit | 4602 |
-| `solid` | Solid | 4603 |
-| `astro` | Astro | 4604 |
-| `nextjs` | Next.js | 4605 |
-| `nuxt` | Nuxt | 4606 |
-| `vanilla` | Vanilla JS | 4607 |
-| `vinext` | Vinext | 4608 |
+| ID          | Framework  | Starting port |
+| ----------- | ---------- | ------------- |
+| `react`     | React      | 4600          |
+| `vue`       | Vue        | 4601          |
+| `sveltekit` | SvelteKit  | 4602          |
+| `solid`     | Solid      | 4603          |
+| `astro`     | Astro      | 4604          |
+| `nextjs`    | Next.js    | 4605          |
+| `nuxt`      | Nuxt       | 4606          |
+| `vanilla`   | Vanilla JS | 4607          |
+| `vinext`    | Vinext     | 4608          |
 
 The runner starts searching at `4600` and automatically advances when a port is already in use.
 
