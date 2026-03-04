@@ -1,12 +1,9 @@
 import {
-  Fragment,
   createElement as createReactElement,
-  useEffect,
-  useRef,
   useSyncExternalStore,
 } from "react";
 import { type Root as ReactRoot, createRoot } from "react-dom/client";
-import { Toaster, sileo } from "sileo";
+import { Toaster } from "sileo";
 import type { UniversaBridgeEvent } from "universa-kit";
 
 import {
@@ -29,6 +26,12 @@ import {
   WS_RECONNECT_DELAY_MS,
 } from "./constants.js";
 import {
+  PanelStore,
+  ShadowStyleSheet,
+  useToast,
+  useToastController,
+} from "./shared/shadow.js";
+import {
   createInitialOverlayState,
   loadOverlaySettings,
   overlayReducer,
@@ -40,6 +43,7 @@ import type {
   OverlaySettings,
   OverlayState,
 } from "./types.js";
+import { setOverlayPortalContainer } from "./ui/utils.js";
 
 // ── Transport helpers ─────────────────────────────────────────────────────────
 
@@ -121,85 +125,15 @@ function shouldRetainConnectedState(
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-const OVERLAY_STYLE_ATTRIBUTE = "data-overlay-runtime-styles";
 const OVERLAY_TOAST_ID = "example-overlay";
-let overlayStyleLoadPromise: Promise<void> | null = null;
-let overlayStyleRefCount = 0;
+const __OVERLAY_CSS_INLINE__ = "__EXAMPLE_OVERLAY_CSS_INLINE__";
+const overlayStyles = new ShadowStyleSheet();
 
-function findOverlayRuntimeStylesheet(): HTMLLinkElement | null {
-  return document.head.querySelector<HTMLLinkElement>(
-    `link[${OVERLAY_STYLE_ATTRIBUTE}="true"]`,
-  );
-}
-
-function ensureOverlayRuntimeStylesheet(): Promise<void> {
-  const existing = findOverlayRuntimeStylesheet();
-  if (existing?.sheet) return Promise.resolve();
-  if (overlayStyleLoadPromise) return overlayStyleLoadPromise;
-
-  const link =
-    existing ??
-    (() => {
-      const nextLink = document.createElement("link");
-      nextLink.rel = "stylesheet";
-      nextLink.href = new URL("../overlay.css", import.meta.url).href;
-      nextLink.setAttribute(OVERLAY_STYLE_ATTRIBUTE, "true");
-      document.head.appendChild(nextLink);
-      return nextLink;
-    })();
-
-  overlayStyleLoadPromise = new Promise<void>((resolve) => {
-    const settle = () => {
-      overlayStyleLoadPromise = null;
-      resolve();
-    };
-
-    link.addEventListener("load", settle, { once: true });
-    link.addEventListener("error", settle, { once: true });
-  });
-
-  return overlayStyleLoadPromise;
-}
-
-function retainOverlayRuntimeStylesheet(): Promise<void> {
-  overlayStyleRefCount += 1;
-  return ensureOverlayRuntimeStylesheet();
-}
-
-function releaseOverlayRuntimeStylesheet(): void {
-  overlayStyleRefCount = Math.max(overlayStyleRefCount - 1, 0);
-  if (overlayStyleRefCount > 0) return;
-
-  findOverlayRuntimeStylesheet()?.remove();
-  overlayStyleLoadPromise = null;
-}
-
-class OverlayPanelStore {
-  #snapshot: OverlayPanelProps;
-  #listeners = new Set<() => void>();
-
-  constructor(initialSnapshot: OverlayPanelProps) {
-    this.#snapshot = initialSnapshot;
-  }
-
-  getSnapshot = (): OverlayPanelProps => this.#snapshot;
-
-  subscribe = (listener: () => void): (() => void) => {
-    this.#listeners.add(listener);
-    return () => {
-      this.#listeners.delete(listener);
-    };
-  };
-
-  setSnapshot(nextSnapshot: OverlayPanelProps): void {
-    this.#snapshot = nextSnapshot;
-    for (const listener of this.#listeners) {
-      listener();
-    }
-  }
-}
-
-function OverlayPanelDescription({ store }: { store: OverlayPanelStore }) {
+function OverlayPanelDescription({
+  store,
+}: {
+  store: PanelStore<OverlayPanelProps>;
+}) {
   const snapshot = useSyncExternalStore(
     store.subscribe,
     store.getSnapshot,
@@ -208,280 +142,31 @@ function OverlayPanelDescription({ store }: { store: OverlayPanelStore }) {
   return createReactElement(OverlayPanel, snapshot);
 }
 
-function OverlayToastController({
-  autoExpand,
-  store,
-  theme,
-}: {
-  autoExpand: boolean;
-  store: OverlayPanelStore;
-  theme: "light" | "dark";
-}) {
-  const toastIdRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    // CSS (data-theme on mount root → [data-sileo-pill]/[data-sileo-body] fill)
-    // handles theme-driven blob colour changes after initial creation.
-    if (toastIdRef.current) return;
-
-    const fill = theme === "dark" ? "black" : "white";
-    queueMicrotask(() => {
-      if (toastIdRef.current) return;
-      // Initial creation.
-      toastIdRef.current = sileo.info({
-        id: OVERLAY_TOAST_ID,
-        title: "Example",
-        description: createReactElement(OverlayPanelDescription, {
-          store,
-        }),
-        duration: null,
-        autopilot: false,
-        fill,
-        // Always fixed — actual corner position is driven by data-overlay-position CSS
-        position: "bottom-right",
-      } as Parameters<typeof sileo.info>[0] & { id: string }) as string;
-    });
-  }, [store, theme]);
-
-  useEffect(() => {
-    return () => {
-      if (toastIdRef.current) {
-        sileo.dismiss(toastIdRef.current);
-        toastIdRef.current = null;
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    const root = document.getElementById(OVERLAY_HOST_ID);
-    if (!root) return;
-
-    let activeToast: HTMLElement | null = null;
-    let activeHeader: HTMLElement | null = null;
-    let isClickExpanded = false;
-    let allowProgrammaticHover = false;
-
-    const isWithinOverlayRoot = (target: Node | null) =>
-      Boolean(target && root.contains(target));
-
-    const triggerNativeOpen = (toast: HTMLElement | null) => {
-      if (!toast) return;
-      allowProgrammaticHover = true;
-      toast.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
-      queueMicrotask(() => {
-        allowProgrammaticHover = false;
-      });
-    };
-
-    const triggerNativeClose = (toast: HTMLElement | null) => {
-      toast?.dispatchEvent(
-        new MouseEvent("mouseout", {
-          bubbles: true,
-          relatedTarget: document.body,
-        }),
-      );
-    };
-
-    const scheduleNativeClose = () => {
-      if (!activeToast) return;
-      triggerNativeClose(activeToast);
-      queueMicrotask(() => {
-        if (!activeToast || isClickExpanded) return;
-        triggerNativeClose(activeToast);
-      });
-      requestAnimationFrame(() => {
-        if (!activeToast || isClickExpanded) return;
-        triggerNativeClose(activeToast);
-      });
-    };
-
-    const reopenIfPinned = () => {
-      if (!activeToast || !isClickExpanded) return;
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          if (!activeToast || !isClickExpanded) return;
-          triggerNativeOpen(activeToast);
-        });
-      });
-    };
-
-    const bindToast = (toast: HTMLElement | null) => {
-      if (activeToast === toast) return;
-
-      if (activeHeader) {
-        activeHeader.removeEventListener("click", handleHeaderClick);
-      }
-
-      if (activeToast) {
-        activeToast.removeEventListener(
-          "mouseover",
-          handleToastMouseOverCapture,
-          true,
-        );
-        activeToast.removeEventListener("focusin", handleFocusIn);
-        activeToast.removeEventListener("focusout", handleFocusOut);
-        activeToast.removeEventListener("mouseout", handleToastMouseOut);
-        activeToast.removeEventListener("keydown", handleToastKeyDown);
-      }
-
-      activeToast = toast;
-      activeHeader =
-        toast?.querySelector<HTMLElement>("[data-sileo-header]") ?? null;
-      isClickExpanded = false;
-      if (!activeToast) return;
-
-      activeToast.addEventListener(
-        "mouseover",
-        handleToastMouseOverCapture,
-        true,
-      );
-      activeToast.addEventListener("focusin", handleFocusIn);
-      activeToast.addEventListener("focusout", handleFocusOut);
-      activeToast.addEventListener("mouseout", handleToastMouseOut);
-      activeToast.addEventListener("keydown", handleToastKeyDown);
-      activeHeader?.addEventListener("click", handleHeaderClick);
-
-      if (!autoExpand) {
-        requestAnimationFrame(() => {
-          if (!activeToast || isClickExpanded) return;
-          triggerNativeClose(activeToast);
-        });
-      }
-    };
-
-    const handleToastMouseOverCapture = (event: MouseEvent) => {
-      if (autoExpand || allowProgrammaticHover) return;
-      const target = event.target as Node | null;
-      if (target && activeHeader?.contains(target)) {
-        event.stopPropagation();
-        return;
-      }
-      event.stopPropagation();
-    };
-
-    const handleFocusIn = () => {
-      // Expand on hover only — focus alone does not expand.
-    };
-
-    const handleFocusOut = (event: FocusEvent) => {
-      if (!activeToast) return;
-      // relatedTarget is null when focus goes to document.body, which happens
-      // when the focused element is removed from the DOM (React re-renders a
-      // tab change, a button becomes disabled, etc.).  This is transient — don't
-      // collapse on it.  Only collapse when focus genuinely moves to an element
-      // outside the overlay (keyboard Tab-away), where relatedTarget is set.
-      if (!event.relatedTarget) return;
-      requestAnimationFrame(() => {
-        if (!activeToast) return;
-        if (isWithinOverlayRoot(document.activeElement)) return;
-        if (isClickExpanded || !autoExpand) return;
-        triggerNativeClose(activeToast);
-      });
-    };
-
-    const handleHeaderClick = (event: MouseEvent) => {
-      if (!activeToast) return;
-      event.preventDefault();
-      event.stopPropagation();
-
-      const isExpanded = activeToast.dataset.expanded === "true";
-      if (!isExpanded || !isClickExpanded) {
-        isClickExpanded = true;
-        triggerNativeOpen(activeToast);
-        return;
-      }
-
-      isClickExpanded = false;
-      scheduleNativeClose();
-    };
-
-    const handleToastMouseOut = (event: MouseEvent) => {
-      if (!activeToast || !isClickExpanded) return;
-      const nextTarget = event.relatedTarget as Node | null;
-      if (isWithinOverlayRoot(nextTarget)) return;
-      reopenIfPinned();
-    };
-
-    const handleToastKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape" || !activeToast || !isClickExpanded) return;
-      event.preventDefault();
-      event.stopPropagation();
-      isClickExpanded = false;
-      scheduleNativeClose();
-      activeToast.focus();
-    };
-
-    const handleDocumentPointerDown = (event: PointerEvent) => {
-      if (!activeToast || !isClickExpanded) return;
-      const target = event.target as Node | null;
-      if (isWithinOverlayRoot(target)) return;
-      isClickExpanded = false;
-      scheduleNativeClose();
-    };
-
-    const syncToast = () => {
-      const toast = root.querySelector<HTMLElement>("[data-sileo-toast]");
-      bindToast(toast);
-    };
-
-    syncToast();
-
-    const observer = new MutationObserver(() => {
-      syncToast();
-    });
-
-    document.addEventListener("pointerdown", handleDocumentPointerDown, true);
-
-    observer.observe(root, {
-      childList: true,
-      subtree: true,
-    });
-
-    return () => {
-      observer.disconnect();
-      document.removeEventListener(
-        "pointerdown",
-        handleDocumentPointerDown,
-        true,
-      );
-      if (activeToast) {
-        activeHeader?.removeEventListener("click", handleHeaderClick);
-        activeToast.removeEventListener(
-          "mouseover",
-          handleToastMouseOverCapture,
-          true,
-        );
-        activeToast.removeEventListener("focusin", handleFocusIn);
-        activeToast.removeEventListener("focusout", handleFocusOut);
-        activeToast.removeEventListener("mouseout", handleToastMouseOut);
-        activeToast.removeEventListener("keydown", handleToastKeyDown);
-      }
-    };
-  }, [autoExpand]);
-
-  return null;
-}
-
 function OverlayRoot({
   autoExpand,
   store,
   theme,
+  shadowRoot,
 }: {
   autoExpand: boolean;
-  store: OverlayPanelStore;
+  store: PanelStore<OverlayPanelProps>;
   theme: "light" | "dark";
+  shadowRoot: ShadowRoot;
 }) {
-  return createReactElement(
-    Fragment,
-    null,
-    // position is always fixed here; actual corner is driven by data-overlay-position CSS
-    createReactElement(Toaster, { position: "bottom-right", theme }),
-    createReactElement(OverlayToastController, {
-      autoExpand,
+  useToast({
+    toastId: OVERLAY_TOAST_ID,
+    title: "Example",
+    theme,
+    description: createReactElement(OverlayPanelDescription, {
       store,
-      theme,
     }),
-  );
+  });
+  useToastController({ shadowRoot, autoExpand });
+
+  return createReactElement(Toaster, {
+    position: "bottom-right",
+    theme,
+  });
 }
 
 export class ExampleOverlay {
@@ -490,6 +175,7 @@ export class ExampleOverlay {
   #baseUrlCandidates: string[] = [];
   #baseUrlCandidateIndex = 0;
   #host: HTMLElement | null = null;
+  #shadowRoot: ShadowRoot | null = null;
   #mountRoot: HTMLElement | null = null;
   #hostObserver: MutationObserver | null = null;
   #deferredMountCleanup: (() => void) | null = null;
@@ -506,7 +192,7 @@ export class ExampleOverlay {
   #allowWebSocket = true;
   #forceMount = false;
   #reactRoot: ReactRoot | null = null;
-  #panelStore: OverlayPanelStore;
+  #panelStore: PanelStore<OverlayPanelProps>;
   #renderScheduled = false;
   #runtimeRefreshFailures = 0;
   #stylesReady = false;
@@ -521,7 +207,7 @@ export class ExampleOverlay {
     this.#forceMount = Boolean(options.force);
     this.#allowWebSocket =
       typeof window === "undefined" || typeof window.WebSocket === "function";
-    this.#panelStore = new OverlayPanelStore(this.buildPanelProps());
+    this.#panelStore = new PanelStore(this.buildPanelProps());
 
     if (this.#forceMount && !settings.enabled) {
       this.applySettings({ ...settings, enabled: true });
@@ -545,12 +231,14 @@ export class ExampleOverlay {
     this.#host = document.createElement("div");
     this.#host.id = OVERLAY_HOST_ID;
     document.body.appendChild(this.#host);
+    this.#shadowRoot = this.#host.attachShadow({ mode: "open" });
     this.startHostObserver();
 
     const mountRoot = document.createElement("div");
     mountRoot.setAttribute(OVERLAY_MOUNT_ROOT_ATTRIBUTE, "true");
-    this.#host.appendChild(mountRoot);
+    this.#shadowRoot.appendChild(mountRoot);
     this.#mountRoot = mountRoot;
+    setOverlayPortalContainer(mountRoot);
     this.#reactRoot = createRoot(mountRoot);
 
     this.#mounted = true;
@@ -568,6 +256,7 @@ export class ExampleOverlay {
 
     this.#reactRoot?.unmount();
     this.#reactRoot = null;
+    setOverlayPortalContainer(null);
 
     if (this.#host) {
       this.#host.remove();
@@ -575,10 +264,11 @@ export class ExampleOverlay {
     }
     this.#mountRoot = null;
 
-    if (this.#stylesReady) {
-      releaseOverlayRuntimeStylesheet();
+    if (this.#stylesReady && this.#shadowRoot) {
+      overlayStyles.release(this.#shadowRoot);
       this.#stylesReady = false;
     }
+    this.#shadowRoot = null;
 
     this.#mounted = false;
   }
@@ -612,9 +302,13 @@ export class ExampleOverlay {
   }
 
   private async finishMount(): Promise<void> {
-    await retainOverlayRuntimeStylesheet();
+    if (this.#shadowRoot) {
+      overlayStyles.retain(this.#shadowRoot, __OVERLAY_CSS_INLINE__);
+    }
     if (!this.#mounted) {
-      releaseOverlayRuntimeStylesheet();
+      if (this.#shadowRoot) {
+        overlayStyles.release(this.#shadowRoot);
+      }
       return;
     }
 
@@ -666,7 +360,7 @@ export class ExampleOverlay {
         ) {
           this.#mountRoot.dataset.overlayPosition = action.settings.position;
         }
-        // Theme changes: re-render so OverlayToastController updates the fill colour.
+        // Theme changes need a full render so mount-root data-theme is refreshed.
         if (action.settings.theme !== prevState.settings.theme) {
           this.scheduleRender();
         } else {
@@ -1054,7 +748,7 @@ export class ExampleOverlay {
   // ── Main render ────────────────────────────────────────────────────────────
 
   private render(): void {
-    if (!this.#mounted) return;
+    if (!this.#mounted || !this.#shadowRoot) return;
 
     const theme = normalizeTheme(this.#state.settings.theme);
     const autoExpand = this.#state.settings.autoExpand;
@@ -1069,6 +763,7 @@ export class ExampleOverlay {
         autoExpand,
         store: this.#panelStore,
         theme,
+        shadowRoot: this.#shadowRoot,
       }),
     );
   }

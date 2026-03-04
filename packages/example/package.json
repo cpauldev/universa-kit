@@ -26,8 +26,8 @@
   },
   "scripts": {
     "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
-    "build:styles": "bun x @tailwindcss/cli -i src/overlay/styles/overlay.css -o dist/overlay.unscoped.css --minify && node ./scripts/scope-overlay-css.mjs",
-    "build": "bun run clean && bun run build:styles && node ./node_modules/typescript/bin/tsc -p tsconfig.build.json"
+    "build:styles": "node ./node_modules/@tailwindcss/cli/dist/index.mjs -i src/overlay/styles/overlay.css -o dist/overlay.css --minify",
+    "build": "node ./scripts/build.mjs"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.0",

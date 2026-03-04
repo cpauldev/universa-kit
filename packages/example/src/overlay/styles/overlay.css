@@ -1,3 +1,5 @@
+@import "sileo/styles.css";
+
 @import "tailwindcss";
 
 /* Limit utility generation to overlay files that use worldality UI classes. */
