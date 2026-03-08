@@ -1,14 +1,16 @@
-# UniversaKit
-
-<p align="center">
-  <img src="assets/universa-logo.png" alt="Universa logo" width="500" style="vertical-align: middle;" />
-</p>
+![UniversaKit banner](assets/universakit.png)
 
 <p align="center">
   <a href="https://github.com/cpauldev/universa-kit/actions/workflows/ci.yml"><img alt="build" src="https://img.shields.io/github/actions/workflow/status/cpauldev/universa-kit/ci.yml?branch=main&style=for-the-badge&label=build" height="28" style="vertical-align: middle;" /></a>
   <a href="https://github.com/cpauldev/universa-kit/releases"><img alt="release" src="https://img.shields.io/github/v/release/cpauldev/universa-kit?style=for-the-badge&label=release" height="28" style="vertical-align: middle;" /></a>
   <a href="LICENSE"><img alt="license" src="https://img.shields.io/badge/license-MIT-blue?style=for-the-badge" height="28" style="vertical-align: middle;" /></a>
 </p>
+
+<p align="center">
+  <img src="https://skillicons.dev/icons?i=nextjs,react,vue,nuxt,svelte,astro,vite,solidjs,angular,remix,nodejs,bun,webpack,cloudflare&theme=light&perline=7" alt="Next.js, React, Vue, Nuxt, SvelteKit, Astro, Vite, Solid, Angular, Remix, Node.js, Bun, Webpack" />
+</p>
+
+# UniversaKit
 
 UniversaKit is a framework-agnostic bridge for local developer tools. It mounts a same-origin control plane (`/__universa/*`) on your app's dev server so browser overlays, CLIs, and helper scripts can all use one protocol for:
 

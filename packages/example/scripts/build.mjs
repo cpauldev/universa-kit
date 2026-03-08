@@ -35,6 +35,24 @@ function run(command, args, options = {}) {
   });
 }
 
+/**
+ * Tailwind v4 wraps the @layer properties fallback block in an @supports
+ * condition that Chrome 130+ evaluates as false (color:rgb(from red r g b) is
+ * now supported). When CSS is loaded via adoptedStyleSheets, @property rules
+ * also don't register globally. Strip the @supports wrapper so the --tw-*
+ * initial values always apply inside the shadow DOM.
+ */
+async function stripLayerPropertiesSupports() {
+  const css = await fs.readFile(overlayCssPath, "utf8");
+  const fixed = css.replace(
+    /@layer properties\{@supports [^{]+\{([\s\S]*?)\}\}/,
+    "@layer properties{$1}",
+  );
+  if (fixed !== css) {
+    await fs.writeFile(overlayCssPath, fixed);
+  }
+}
+
 async function inlineOverlayCss() {
   const [css, overlayBundle] = await Promise.all([
     fs.readFile(overlayCssPath, "utf8"),
@@ -74,6 +92,7 @@ async function build() {
     "--minify",
   ]);
 
+  await stripLayerPropertiesSupports();
   await run(process.execPath, [tscPath, "-p", "tsconfig.build.json"]);
   await inlineOverlayCss();
 }

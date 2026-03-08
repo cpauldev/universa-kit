@@ -1,6 +1,6 @@
 {
   "name": "universa-kit",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Universal bridge for in-browser development tools with cross-framework adapters, same-origin APIs, and runtime control.",
   "type": "module",
   "main": "./dist/index.js",
