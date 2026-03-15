@@ -81,8 +81,6 @@ export function createUniversaVitePlugin(
       !shouldWrapSvelteKitEntry && !shouldWrapVinextEntries;
   }
 
-  resolveProjectBehavior(process.cwd());
-
   return {
     name: resolvedOptions.adapterName,
     enforce: "pre" as const,
