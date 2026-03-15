@@ -260,6 +260,19 @@ export function appendPlugin<T>(plugins: T[] | undefined, plugin: T): T[] {
   return [...(plugins ?? []), plugin];
 }
 
+export function createClientBootstrapVirtualIds(namespaceId: string): {
+  virtualId: string;
+  resolvedVirtualId: string;
+  publicSpecifier: string;
+} {
+  const virtualId = `universa-kit:client-init:${namespaceId}`;
+  return {
+    virtualId,
+    resolvedVirtualId: `\0${virtualId}`,
+    publicSpecifier: `/@id/${virtualId}`,
+  };
+}
+
 export function buildClientRuntimeContextRegistration(
   clientModule: string,
   context?: UniversaClientRuntimeContext,
@@ -270,4 +283,28 @@ export function buildClientRuntimeContextRegistration(
     `globalThis.__UNIVERSA_CLIENT_RUNTIME_CONTEXTS__ ??= {};`,
     `globalThis.__UNIVERSA_CLIENT_RUNTIME_CONTEXTS__[${JSON.stringify(clientModule)}] = ${JSON.stringify(context)};`,
   ];
+}
+
+export function buildClientBootstrapModuleSource(options: {
+  clientModule: string;
+  clientRuntimeContext?: UniversaClientRuntimeContext;
+  acceptHotUpdate?: boolean;
+  footerLines?: string[];
+}): string {
+  const lines = buildClientRuntimeContextRegistration(
+    options.clientModule,
+    options.clientRuntimeContext,
+  );
+
+  lines.push(`import ${JSON.stringify(options.clientModule)};`);
+
+  if (options.acceptHotUpdate) {
+    lines.push(`if (import.meta.hot) { import.meta.hot.accept(() => {}); }`);
+  }
+
+  if (options.footerLines?.length) {
+    lines.push(...options.footerLines);
+  }
+
+  return lines.join("\n");
 }

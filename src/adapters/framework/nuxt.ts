@@ -4,8 +4,9 @@ import {
   type MiddlewareAdapterServer,
   type UniversaAdapterOptions,
   appendPlugin,
-  buildClientRuntimeContextRegistration,
+  buildClientBootstrapModuleSource,
   createBridgeLifecycle,
+  createClientBootstrapVirtualIds,
   resolveAdapterOptions,
 } from "../shared/adapter-utils.js";
 
@@ -20,17 +21,6 @@ export type UniversaNuxtModule = ((
   };
 };
 
-function createClientVirtualIds(namespaceId: string): {
-  virtualId: string;
-  resolvedVirtualId: string;
-} {
-  const virtualId = `universa-kit:client-init:${namespaceId}`;
-  return {
-    virtualId,
-    resolvedVirtualId: `\0${virtualId}`,
-  };
-}
-
 export function createUniversaNuxtModule(
   options: UniversaNuxtOptions = {},
 ): UniversaNuxtModule {
@@ -39,7 +29,7 @@ export function createUniversaNuxtModule(
     resolvedOptions.clientEnabled === false
       ? undefined
       : resolvedOptions.clientModule;
-  const virtualIds = createClientVirtualIds(
+  const virtualIds = createClientBootstrapVirtualIds(
     resolvedOptions.namespaceId ?? resolvedOptions.adapterName,
   );
   const lifecycle = createBridgeLifecycle(resolvedOptions);
@@ -57,15 +47,11 @@ export function createUniversaNuxtModule(
 
     load(id: string) {
       if (clientModule && id === virtualIds.resolvedVirtualId) {
-        const clientContext = buildClientRuntimeContextRegistration(
+        return buildClientBootstrapModuleSource({
           clientModule,
-          resolvedOptions.clientRuntimeContext,
-        );
-        return [
-          ...clientContext,
-          `import ${JSON.stringify(clientModule)};`,
-          `if (import.meta.hot) { import.meta.hot.accept(() => {}); }`,
-        ].join("\n");
+          clientRuntimeContext: resolvedOptions.clientRuntimeContext,
+          acceptHotUpdate: true,
+        });
       }
     },
 
@@ -76,7 +62,7 @@ export function createUniversaNuxtModule(
         return [
           {
             tag: "script",
-            attrs: { type: "module", src: `/@id/${virtualIds.virtualId}` },
+            attrs: { type: "module", src: virtualIds.publicSpecifier },
             injectTo: "head-prepend" as const,
           },
         ];
@@ -134,15 +120,15 @@ export function createUniversaNuxtModule(
       });
 
       if (!hasTemplate) {
-        const registerContext = buildClientRuntimeContextRegistration(
-          clientModule,
-          resolvedOptions.clientRuntimeContext,
-        );
         buildTemplates.push({
           filename: templateFilename,
           write: true,
           getContents: () =>
-            `${registerContext.join("\n")}\nimport ${JSON.stringify(clientModule)};\nexport default () => {};`,
+            buildClientBootstrapModuleSource({
+              clientModule,
+              clientRuntimeContext: resolvedOptions.clientRuntimeContext,
+              footerLines: ["export default () => {};"],
+            }),
         });
       }
 

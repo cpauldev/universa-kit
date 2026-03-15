@@ -1,7 +1,7 @@
 import {
   type MiddlewareAdapterServer,
   type UniversaAdapterOptions,
-  buildClientRuntimeContextRegistration,
+  buildClientBootstrapModuleSource,
   createBridgeLifecycle,
   resolveAdapterOptions,
 } from "../shared/adapter-utils.js";
@@ -33,13 +33,12 @@ export function createUniversaAstroIntegration(
         const command = setupOptions.command;
         const injectScript = setupOptions.injectScript;
         if (clientModule && command === "dev" && injectScript) {
-          const registerContext = buildClientRuntimeContextRegistration(
-            clientModule,
-            resolvedOptions.clientRuntimeContext,
-          ).join("\n");
           injectScript(
             "page",
-            `${registerContext}\nimport ${JSON.stringify(clientModule)};`,
+            buildClientBootstrapModuleSource({
+              clientModule,
+              clientRuntimeContext: resolvedOptions.clientRuntimeContext,
+            }),
           );
         }
       },

@@ -261,6 +261,12 @@ function guardVitePlugin(
         ...args,
       );
     },
+    transform: (...args: unknown[]) => {
+      if (!isFrameworkActive()) return undefined;
+      return (
+        plugin as { transform?: (...args: unknown[]) => unknown }
+      ).transform?.(...args);
+    },
     transformIndexHtml: guardedTransform,
     configureServer: async (...args: unknown[]) => {
       if (!isFrameworkActive()) return;
