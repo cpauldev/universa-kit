@@ -7,28 +7,27 @@ import {
   createWebSocketBinding,
   getDevServerBaseUrlCandidates,
   resolveDevServerBaseUrl,
-} from "../overlay/api.js";
+} from "../overlay/api";
 import {
   createDashboardDiscoveryController,
   createInitialDiscoveryState,
-} from "./discovery.js";
+} from "./discovery";
 import {
   areDashboardLiveStatesEqual,
   createInitialDashboardLiveState,
   resolveDashboardLiveStateOnFailure,
   resolveDashboardLiveStateOnSuccess,
-} from "./sections.js";
+} from "./sections";
 import type {
   DashboardActionId,
   DashboardController,
   DashboardControllerOptions,
   DashboardControllerState,
   DashboardLiveState,
-} from "./types.js";
+} from "./types";
 
 const DEFAULT_LIVE_POLL_INTERVAL_MS = 2000;
 const WS_RECONNECT_DELAY_MS = 1500;
-let overlayBootstrapPromise: Promise<void> | null = null;
 
 type RuntimeStatusEvent = Extract<
   UniversaBridgeEvent,
@@ -71,20 +70,6 @@ function resolveRuntimeEventTransportState(
     return "runtime_starting";
   }
   return "connected";
-}
-
-function ensureOverlayMounted(): void {
-  if (typeof window === "undefined") return;
-  if (overlayBootstrapPromise) return;
-
-  overlayBootstrapPromise = import("../overlay/index.js")
-    .then((module) => {
-      module.mountOverlay();
-    })
-    .catch(() => {
-      overlayBootstrapPromise = null;
-      // Ignore overlay bootstrap failures to keep dashboard runtime resilient.
-    });
 }
 
 function createInitialState(): DashboardControllerState {
@@ -570,7 +555,6 @@ export function createDashboardController(
     start() {
       if (started) return;
       started = true;
-      ensureOverlayMounted();
 
       if (discovery) {
         discoveryUnsubscribe = discovery.subscribe((discoveryState) => {

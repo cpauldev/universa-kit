@@ -3,7 +3,7 @@
 import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip";
 import * as React from "react";
 
-import { cn, getOverlayPortalContainer } from "./utils.js";
+import { cn, getOverlayPortalContainer } from "./utils";
 
 const TooltipCreateHandle = TooltipPrimitive.createHandle;
 

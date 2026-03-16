@@ -1,7 +1,7 @@
 import { type VariantProps, cva } from "class-variance-authority";
 import * as React from "react";
 
-import { cn } from "./utils.js";
+import { cn } from "./utils";
 
 function SidebarMenu({ className, ...props }: React.ComponentProps<"ul">) {
   return (

@@ -3,5 +3,5 @@ export {
   createExampleBridge,
   example,
   startStandaloneExampleBridgeServer,
-} from "./bridge.js";
-export * from "./defaults.js";
+} from "./bridge";
+export * from "./defaults";

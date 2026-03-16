@@ -10,7 +10,7 @@ import {
   type ExampleConfigOptions,
   resolveExampleBridgeOptions,
   resolveExampleConfigOptions,
-} from "./defaults.js";
+} from "./defaults";
 
 export type ExampleBridgeOptions = UniversaBridgeOptions;
 export type { StandaloneBridgeServer };

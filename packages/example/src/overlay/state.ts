@@ -4,8 +4,8 @@ import {
   OVERLAY_ENABLED_KEY,
   OVERLAY_POSITIONS,
   OVERLAY_STORAGE_KEY,
-} from "./constants.js";
-import type { OverlayAction, OverlaySettings, OverlayState } from "./types.js";
+} from "./constants";
+import type { OverlayAction, OverlaySettings, OverlayState } from "./types";
 
 function mergeSettings(
   base: OverlaySettings,

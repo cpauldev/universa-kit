@@ -1,11 +1,7 @@
 import type { UniversaBridgeState, UniversaRuntimeStatus } from "universa-kit";
 
-import { BRIDGE_BASE_PATH } from "./constants.js";
-import type {
-  FileMetadata,
-  FileTreeNode,
-  OverlayActionResult,
-} from "./types.js";
+import { BRIDGE_BASE_PATH } from "./constants";
+import type { FileMetadata, FileTreeNode, OverlayActionResult } from "./types";
 
 const UNIVERSA_WS_SUBPROTOCOL = "universa.v1+json";
 

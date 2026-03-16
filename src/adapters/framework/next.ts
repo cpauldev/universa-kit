@@ -1,3 +1,7 @@
+import { existsSync, writeFileSync } from "fs";
+import { join } from "path";
+import { fileURLToPath } from "url";
+
 import type { StandaloneBridgeServer } from "../../bridge/standalone.js";
 import {
   UNIVERSA_NEXT_BRIDGE_GLOBAL_KEY,
@@ -69,6 +73,35 @@ function prependClientToEntries(
   return entries;
 }
 
+// Resolved at module load time — points to the CJS loader shipped with this package.
+const CLIENT_INJECT_LOADER_PATH = fileURLToPath(
+  new URL("./client-inject.cjs", import.meta.url),
+);
+
+// Next.js 15.1+ automatically includes instrumentation-client.ts as a separate
+// Turbopack entry point (NOT in the bootstrap chain), so its chunking context
+// allows external module references. It's also within process.cwd(), which
+// means standard node_modules lookup finds workspace packages correctly.
+const NEXT_TURBOPACK_CLIENT_ENTRY = "**/instrumentation-client.{ts,js,tsx,jsx}";
+
+// Ensures instrumentation-client.ts exists so Next.js/Turbopack picks it up.
+// Creates an empty file if missing; never overwrites existing content.
+function ensureInstrumentationClientFile(): void {
+  const candidates = [
+    join(process.cwd(), "src", "instrumentation-client.ts"),
+    join(process.cwd(), "instrumentation-client.ts"),
+  ];
+  const existing = candidates.find((p) => existsSync(p));
+  if (!existing) {
+    const [target] = candidates;
+    try {
+      writeFileSync(target, "");
+    } catch {
+      // best-effort; if creation fails, injection just won't fire
+    }
+  }
+}
+
 export function withUniversaNext<T extends object>(
   nextConfig: T,
   options: UniversaNextOptions = {},
@@ -128,6 +161,8 @@ export function withUniversaNext<T extends object>(
       };
     }
 
+    // Webpack (used when Turbopack is explicitly disabled): prepend the client
+    // module to every client entry so it loads before the app code.
     const originalWebpack = next.webpack;
     next.webpack = (config: WebpackConfig, ctx: WebpackCtx): WebpackConfig => {
       const baseConfig = originalWebpack
@@ -154,13 +189,47 @@ export function withUniversaNext<T extends object>(
       return baseConfig;
     };
 
+    const nextAny = next as Record<string, unknown>;
+
+    // Ensure the client module's package is in transpilePackages so Turbopack
+    // includes it in the project's module graph. Without this, workspace
+    // packages (symlinked from packages/) are treated as external by Turbopack
+    // and can't be imported from inside node_modules (e.g. app-next-turbopack).
+    const clientPackageName = clientModule.split("/")[0] as string;
+    const existingTranspile = (nextAny.transpilePackages as string[]) ?? [];
+    if (!existingTranspile.includes(clientPackageName)) {
+      nextAny.transpilePackages = [...existingTranspile, clientPackageName];
+    }
+
     // Next.js 16+ errors when a webpack config exists alongside Turbopack
     // (now the default) but no turbopack config is set. Ensure an empty
     // turbopack key is present so Next.js knows this is intentional.
-    const nextAny = next as Record<string, unknown>;
     if (!nextAny.turbopack) {
       nextAny.turbopack = {};
     }
+
+    // Turbopack does not call the webpack entry function. Instead, inject the
+    // clientModule import into instrumentation-client.ts — a Next.js 15.1+
+    // file that is compiled as a SEPARATE entry (not in the bootstrap chain),
+    // so its chunking context allows external module references. The file is
+    // within process.cwd(), so standard node_modules lookup finds workspace
+    // packages, and transpilePackages causes inline (non-external) compilation.
+    ensureInstrumentationClientFile();
+
+    const turbopackConfig = nextAny.turbopack as Record<string, unknown>;
+    const existingRules =
+      (turbopackConfig.rules as Record<string, unknown>) ?? {};
+    turbopackConfig.rules = {
+      ...existingRules,
+      [NEXT_TURBOPACK_CLIENT_ENTRY]: {
+        loaders: [
+          {
+            loader: CLIENT_INJECT_LOADER_PATH,
+            options: { module: clientModule },
+          },
+        ],
+      },
+    };
   }
 
   return next;

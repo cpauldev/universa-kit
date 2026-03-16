@@ -10,7 +10,7 @@ import {
   OverlayPanel,
   type OverlayPanelProps,
   normalizeTheme,
-} from "./OverlayPanel.js";
+} from "./OverlayPanel";
 import {
   type ExampleApi,
   type WebSocketBinding,
@@ -18,32 +18,32 @@ import {
   createWebSocketBinding,
   getDevServerBaseUrlCandidates,
   resolveDevServerBaseUrl,
-} from "./api.js";
+} from "./api";
 import {
   OVERLAY_HOST_ID,
   OVERLAY_MOUNT_ROOT_ATTRIBUTE,
   STATE_POLL_INTERVAL_MS,
   WS_RECONNECT_DELAY_MS,
-} from "./constants.js";
+} from "./constants";
 import {
   PanelStore,
   ShadowStyleSheet,
   useToast,
   useToastController,
-} from "./shared/shadow.js";
+} from "./shared/shadow";
 import {
   createInitialOverlayState,
   loadOverlaySettings,
   overlayReducer,
   persistOverlaySettings,
-} from "./state.js";
+} from "./state";
 import type {
   OverlayAction,
   OverlayMountOptions,
   OverlaySettings,
   OverlayState,
-} from "./types.js";
-import { setOverlayPortalContainer } from "./ui/utils.js";
+} from "./types";
+import { setOverlayPortalContainer } from "./ui/utils";
 
 // ── Transport helpers ─────────────────────────────────────────────────────────
 

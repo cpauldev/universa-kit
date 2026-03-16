@@ -93,7 +93,7 @@
   ],
   "scripts": {
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
-    "build": "bun run clean && bun x tsc -p tsconfig.build.json",
+    "build": "bun run clean && bun x tsc -p tsconfig.build.json && node -e \"const{cpSync,mkdirSync}=require('fs');cpSync('src/adapters/framework/client-inject.cjs','dist/adapters/framework/client-inject.cjs')\"",
     "typecheck": "bun x tsc -p tsconfig.build.json --noEmit",
     "prepublishOnly": "bun run build && bun run test && bun run typecheck",
     "lint": "bun run lint:eslint && bun run typecheck",

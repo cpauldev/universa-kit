@@ -1,7 +1,7 @@
 import type { UniversaBridgeState } from "universa-kit";
 
-import type { ExampleApi } from "../overlay/api.js";
-import type { FileMetadata, FileTreeNode } from "../overlay/types.js";
+import type { ExampleApi } from "../overlay/api";
+import type { FileMetadata, FileTreeNode } from "../overlay/types";
 
 export type DashboardTransportState =
   | "disconnected"

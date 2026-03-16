@@ -1,7 +1,7 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-import { OVERLAY_MOUNT_ROOT_SELECTOR } from "../constants.js";
+import { OVERLAY_MOUNT_ROOT_SELECTOR } from "../constants";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

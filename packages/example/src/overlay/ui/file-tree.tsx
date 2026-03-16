@@ -1,8 +1,8 @@
 import { ChevronRight, Folder, FolderOpen } from "lucide-react";
 import * as React from "react";
 
-import type { FileTreeNode } from "../types.js";
-import { cn } from "./utils.js";
+import type { FileTreeNode } from "../types";
+import { cn } from "./utils";
 
 export interface FileTreeProps {
   nodes: FileTreeNode[];
