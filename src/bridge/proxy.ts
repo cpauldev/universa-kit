@@ -137,3 +137,110 @@ export async function proxyToRuntime(
   res.statusCode = upstream.status;
   res.end(Buffer.from(await upstream.arrayBuffer()));
 }
+
+/**
+ * Proxy a request to the runtime at the exact same path (no path transformation).
+ * Used for additional proxy paths that are served directly by the runtime
+ * rather than routed through the bridge API prefix.
+ */
+export async function proxyToRuntimeRaw(
+  req: IncomingMessage,
+  res: ServerResponse,
+  runtimePathWithSearch: string,
+  context: RuntimeProxyContext,
+): Promise<void> {
+  if (context.shouldAutoStartRuntime()) {
+    try {
+      await context.ensureRuntimeStarted();
+    } catch (error) {
+      context.writeBridgeError(
+        res,
+        503,
+        "runtime_start_failed",
+        error instanceof Error ? error.message : "Unable to start runtime",
+        {
+          retryable: true,
+          details: {
+            fallbackCommand: context.fallbackCommand,
+            reason: "runtime_start_failed",
+          },
+        },
+      );
+      return;
+    }
+  }
+
+  const runtimeUrl = context.getRuntimeUrl();
+  if (!runtimeUrl) {
+    context.writeBridgeError(
+      res,
+      503,
+      "runtime_unavailable",
+      "Runtime is not running",
+      {
+        retryable: true,
+        details: {
+          fallbackCommand: context.fallbackCommand,
+        },
+      },
+    );
+    return;
+  }
+
+  const target = new URL(runtimePathWithSearch || "/", runtimeUrl);
+  const body =
+    req.method && ["POST", "PUT", "PATCH", "DELETE"].includes(req.method)
+      ? await readRequestBody(req)
+      : undefined;
+
+  const headers = new Headers();
+  for (const [key, value] of Object.entries(req.headers)) {
+    if (Array.isArray(value)) {
+      value.forEach((item) => headers.append(key, item));
+    } else if (typeof value === "string") {
+      headers.set(key, value);
+    }
+  }
+
+  let upstream: Response;
+  try {
+    upstream = await fetch(target, {
+      method: req.method || "GET",
+      headers,
+      body: body && body.length > 0 ? new Uint8Array(body) : undefined,
+    });
+  } catch (error) {
+    context.writeBridgeError(
+      res,
+      502,
+      "bridge_proxy_failed",
+      error instanceof Error ? error.message : "Bridge proxy failed",
+      {
+        retryable: true,
+        details: {
+          target: target.toString(),
+        },
+      },
+    );
+    return;
+  }
+
+  if (upstream.status >= 500) {
+    context.onRuntimeError(
+      `Upstream runtime returned ${upstream.status} for ${target.pathname}`,
+    );
+  }
+
+  upstream.headers.forEach((value, key) => {
+    if (key.toLowerCase() !== "set-cookie") {
+      res.setHeader(key, value);
+    }
+  });
+  const setCookieValues = extractSetCookieHeaders(upstream.headers);
+  if (setCookieValues.length > 0) {
+    res.setHeader("set-cookie", setCookieValues);
+  }
+
+  res.statusCode = upstream.status;
+  res.end(Buffer.from(await upstream.arrayBuffer()));
+}

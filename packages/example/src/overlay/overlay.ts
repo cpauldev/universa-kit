@@ -116,7 +116,7 @@ function resolveRuntimeEventTransportState(
   return "connected";
 }
 
-function shouldRetainConnectedState(
+function shouldRetainConnectedStateOnFailure(
   connected: boolean,
   failures: number,
 ): boolean {
@@ -294,6 +294,13 @@ export class ExampleOverlay {
       document.removeEventListener("DOMContentLoaded", onDOMContentLoaded);
       window.removeEventListener("load", onLoad);
     };
+
+    // If DOMContentLoaded already fired (readyState is not 'loading'), the
+    // event listeners above will never trigger. Kick off a rAF-based retry so
+    // the mount still happens on the next animation frame.
+    if (document.readyState !== "loading") {
+      requestAnimationFrame(() => retryMount());
+    }
   }
 
   private clearDeferredMount(): void {
@@ -522,7 +529,7 @@ export class ExampleOverlay {
         this.#state.transportState,
         this.#runtimeRefreshFailures,
       );
-      const retainConnected = shouldRetainConnectedState(
+      const retainConnected = shouldRetainConnectedStateOnFailure(
         this.#state.connected,
         this.#runtimeRefreshFailures,
       );
@@ -588,6 +595,8 @@ export class ExampleOverlay {
   }
 
   private handleWebSocketMessage(message: unknown): void {
+    this.#wsConsecutiveFailures = 0;
+
     if (isRuntimeStatusEvent(message)) {
       this.applyRuntimeStatusEvent(message);
       return;
@@ -720,7 +729,9 @@ export class ExampleOverlay {
     if (this.#baseUrlCandidates.length < 2) return;
     this.#baseUrlCandidateIndex =
       (this.#baseUrlCandidateIndex + 1) % this.#baseUrlCandidates.length;
-    this.setActiveBaseUrl(this.#baseUrlCandidates[this.#baseUrlCandidateIndex]);
+    const nextBaseUrl = this.#baseUrlCandidates[this.#baseUrlCandidateIndex];
+    if (!nextBaseUrl) return;
+    this.setActiveBaseUrl(nextBaseUrl);
   }
 
   private async runWithBaseUrlFallback<T>(

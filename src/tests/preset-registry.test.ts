@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it } from "bun:test";
 
-import { UNIVERSA_NEXT_BRIDGE_GLOBAL_KEY } from "../adapters/shared/adapter-utils.js";
+import {
+  UNIVERSA_NEXT_BRIDGE_GLOBAL_KEY,
+  type UniversaRewriteSpec,
+} from "../adapters/shared/adapter-utils.js";
 import { getUniversaRegisteredPresets } from "../preset-registry.js";
 import { createUniversaPreset } from "../preset.js";
 import { createMiddlewareAdapterServerFixture } from "./utils/adapter-server-fixtures.js";
@@ -98,7 +101,7 @@ describe("preset registry + namespacing", () => {
     });
     const second = createUniversaPreset({
       identity: { packageName: "@acme/duplicate-tool" },
-      client: { autoMount: false },
+      instanceId: "second",
     });
 
     const firstProxy = await first.angularCli.createProxyConfig({
@@ -265,7 +268,7 @@ describe("preset registry + namespacing", () => {
 
     const wrappedConfig = second.next(
       first.next({
-        rewrites: async () => [],
+        rewrites: async (): Promise<UniversaRewriteSpec> => [],
       }),
     );
     const rewrites = await wrappedConfig.rewrites?.();
@@ -273,9 +276,9 @@ describe("preset registry + namespacing", () => {
       throw new Error("Expected Next rewrites object with beforeFiles");
     }
 
-    expect(rewrites.beforeFiles.length).toBe(2);
+    expect(rewrites.beforeFiles?.length).toBe(2);
     const uniqueSources = new Set(
-      rewrites.beforeFiles.map((item) => item.source),
+      rewrites.beforeFiles?.map((item) => item.source),
     );
     expect(uniqueSources.size).toBe(2);
   });
@@ -283,32 +286,27 @@ describe("preset registry + namespacing", () => {
   it("keeps only the latest Astro integration call active", async () => {
     const first = createUniversaPreset({
       identity: { packageName: "@acme/astro-latest-a" },
-      client: { module: "@acme/client-a" },
+      autoStart: false,
     });
     const second = createUniversaPreset({
       identity: { packageName: "@acme/astro-latest-b" },
-      client: { module: "@acme/client-b" },
+      autoStart: false,
     });
 
     const stale = first.astro();
     const active = second.astro();
-    const staleScripts: string[] = [];
-    const activeScripts: string[] = [];
+    const staleFixture = createMiddlewareAdapterServerFixture();
+    const activeFixture = createMiddlewareAdapterServerFixture();
 
-    await stale.hooks["astro:config:setup"]?.({
-      command: "dev",
-      injectScript: (_stage: unknown, content: string) => {
-        staleScripts.push(content);
-      },
-    });
-    await active.hooks["astro:config:setup"]?.({
-      command: "dev",
-      injectScript: (_stage: unknown, content: string) => {
-        activeScripts.push(content);
-      },
+    await stale.hooks["astro:server:setup"]?.({ server: staleFixture.server });
+    await active.hooks["astro:server:setup"]?.({
+      server: activeFixture.server,
     });
 
-    expect(staleScripts.length).toBe(0);
-    expect(activeScripts.length).toBe(2);
+    expect(staleFixture.getMiddlewareCount()).toBe(0);
+    expect(activeFixture.getMiddlewareCount()).toBe(2);
+
+    await stale.hooks["astro:server:done"]?.({});
+    await active.hooks["astro:server:done"]?.({});
   });
 });

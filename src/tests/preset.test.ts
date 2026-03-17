@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it } from "bun:test";
 
-import { UNIVERSA_NEXT_BRIDGE_GLOBAL_KEY } from "../adapters/shared/adapter-utils.js";
+import {
+  UNIVERSA_NEXT_BRIDGE_GLOBAL_KEY,
+  type UniversaRewriteSpec,
+} from "../adapters/shared/adapter-utils.js";
 import { createUniversaPreset } from "../preset.js";
 
 type StandaloneBridgeLike = {
@@ -100,14 +103,14 @@ describe("createUniversaPreset", () => {
     });
 
     const wrappedNextConfig = preset.next({
-      rewrites: async () => [],
+      rewrites: async (): Promise<UniversaRewriteSpec> => [],
     });
     const rewrites = await wrappedNextConfig.rewrites?.();
     if (!rewrites || Array.isArray(rewrites)) {
       throw new Error("Expected Next rewrites object with beforeFiles");
     }
 
-    expect(rewrites.beforeFiles[0]).toEqual({
+    expect(rewrites.beforeFiles?.[0]).toEqual({
       source: "/__universa/tests-base-options/:path*",
       destination:
         "http://127.0.0.1:40101/__universa/tests-base-options/:path*",
@@ -149,7 +152,7 @@ describe("createUniversaPreset", () => {
 
     const wrappedNextConfig = preset.next(
       {
-        rewrites: async () => [],
+        rewrites: async (): Promise<UniversaRewriteSpec> => [],
       },
       {
         nextBridgeGlobalKey: overrideBridgeKey,
@@ -161,7 +164,7 @@ describe("createUniversaPreset", () => {
       throw new Error("Expected Next rewrites object with beforeFiles");
     }
 
-    expect(rewrites.beforeFiles[0]).toEqual({
+    expect(rewrites.beforeFiles?.[0]).toEqual({
       source: "/__universa/tests-per-call/:path*",
       destination: "http://127.0.0.1:40202/__universa/tests-per-call/:path*",
     });

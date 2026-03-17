@@ -170,55 +170,6 @@ describe("universa-kit adapters", () => {
     expect(prodHooks["vite:extendConfig"]).toBeUndefined();
   });
 
-  it("createUniversaNuxtModule inlines runtime context registration in the generated client plugin", () => {
-    const module = createUniversaNuxtModule({
-      clientModule: "example/overlay",
-      namespaceId: "example",
-      clientRuntimeContext: {
-        namespaceId: "example",
-        bridgePathPrefix: "/__universa/example",
-        clientEnabled: true,
-        autoMount: true,
-        keyPrefix: "universa:client:example",
-        rootId: "universa-client-example",
-        instanceKey: "__UNIVERSA_CLIENT_INSTANCE__:example",
-        stateStorageKey: "universa:client:example:state",
-        enabledStorageKey: "universa:client:example:enabled",
-      },
-    });
-    const hooks: Record<string, (...args: unknown[]) => void> = {};
-    const nuxtOptions: {
-      dev?: boolean;
-      build?: { templates?: unknown[] };
-      plugins?: unknown[];
-    } = { dev: true };
-
-    module(
-      {},
-      {
-        options: nuxtOptions,
-        hook: (name: string, listener: (...args: unknown[]) => void) => {
-          hooks[name] = listener;
-        },
-      },
-    );
-
-    const templates = nuxtOptions.build?.templates ?? [];
-    const template = templates.find((entry) => {
-      if (!entry || typeof entry !== "object") return false;
-      return (
-        (entry as { filename?: unknown }).filename ===
-        "universa-bridge-client.client.mjs"
-      );
-    }) as { getContents?: () => string } | undefined;
-
-    expect(template).toBeDefined();
-    expect(typeof template?.getContents).toBe("function");
-    const contents = template?.getContents?.() ?? "";
-    expect(contents).toContain("__UNIVERSA_CLIENT_RUNTIME_CONTEXTS__");
-    expect(contents).not.toContain("universa-kit/client-runtime");
-  });
-
   it("createUniversaAstroIntegration wires setup and teardown hooks", async () => {
     const integration = createUniversaAstroIntegration({
       autoStart: false,
@@ -310,33 +261,5 @@ describe("universa-kit adapters", () => {
 
     fixture.emit("close");
     await new Promise((resolve) => setTimeout(resolve, 0));
-  });
-
-  it("createUniversaVitePlugin inlines runtime context registration in the virtual client module", () => {
-    const plugin = createUniversaVitePlugin({
-      autoStart: false,
-      namespaceId: "example",
-      clientModule: "example/overlay",
-      clientRuntimeContext: {
-        namespaceId: "example",
-        bridgePathPrefix: "/__universa/example",
-        clientEnabled: true,
-        autoMount: true,
-        keyPrefix: "universa:client:example",
-        rootId: "universa-client-example",
-        instanceKey: "__UNIVERSA_CLIENT_INSTANCE__:example",
-        stateStorageKey: "universa:client:example:state",
-        enabledStorageKey: "universa:client:example:enabled",
-      },
-    });
-    const pluginObject = Array.isArray(plugin) ? plugin[0] : plugin;
-    const virtualId = "universa-kit:client-init:example";
-    const resolvedId = pluginObject?.resolveId?.(virtualId);
-    const code =
-      typeof resolvedId === "string" ? pluginObject?.load?.(resolvedId) : "";
-
-    expect(typeof code).toBe("string");
-    expect(code).toContain("__UNIVERSA_CLIENT_RUNTIME_CONTEXTS__");
-    expect(code).not.toContain("universa-kit/client-runtime");
   });
 });

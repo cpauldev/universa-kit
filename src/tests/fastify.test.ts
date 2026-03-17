@@ -1,13 +1,14 @@
 import { describe, expect, it } from "bun:test";
 
-import { attachUniversaToFastify } from "../adapters/server/fastify.js";
+import {
+  type FastifyLikeInstance,
+  attachUniversaToFastify,
+} from "../adapters/server/fastify.js";
 
 type HookHandler = (...args: unknown[]) => void;
 
 function createFastifyFixture(): {
-  fastify: {
-    addHook: (name: "onRequest" | "onClose", hook: HookHandler) => void;
-  };
+  fastify: FastifyLikeInstance;
   getHook: (name: "onRequest" | "onClose") => HookHandler | undefined;
 } {
   const hooks: Record<"onRequest" | "onClose", HookHandler | undefined> = {
@@ -17,10 +18,10 @@ function createFastifyFixture(): {
 
   return {
     fastify: {
-      addHook: (name, hook) => {
-        hooks[name] = hook;
+      addHook: (name: string, hook: HookHandler) => {
+        hooks[name as "onRequest" | "onClose"] = hook;
       },
-    },
+    } as FastifyLikeInstance,
     getHook: (name) => hooks[name],
   };
 }

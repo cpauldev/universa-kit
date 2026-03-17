@@ -61,10 +61,6 @@ export function acmetool() {
     command: "acmetool",
     args: ["dev"],
     fallbackCommand: "acmetool dev",
-    client: {
-      module: "acmetool/overlay",
-      autoMount: true,
-    },
   });
 }
 ```
@@ -134,19 +130,12 @@ window.addEventListener("beforeunload", () => unsubscribe());
 - `bridgePathPrefix` is normalized under `/__universa`.
 - Keep your public API stable (`acmetool().vite()`, `acmetool().next(...)`, etc.).
 
-## 7) Preset composition and client auto-mount behavior
+## 7) Preset composition
 
 - `createUniversaPreset` defaults to `composition: "registry"`.
 - In `"registry"` mode, framework/build adapters compose all registered presets (`vite`, `next`, `nuxt`, `astro`, `webpack`, `rsbuild`, `rspack`).
 - In `"local"` mode, a preset only applies its own framework/build wiring.
 - Imperative adapters remain local to each preset instance (`bun`, `node`, `fastify`, `hono`, `angularCli`).
-
-`client.autoMount` resolution order (when `client.module` is configured):
-
-1. query override `?universaClient.<namespaceId>=true|false`
-2. global query override `?universaClient=true|false`
-3. `localStorage` key `universa:client:<namespaceId>:enabled`
-4. preset default `client.autoMount`
 
 ## 8) Public API coverage
 

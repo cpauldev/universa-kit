@@ -11,7 +11,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const ROOT_DIR = join(__dirname, "../..");
 const EXAMPLES_RUN_LOCK_PATH = join(ROOT_DIR, ".tmp-examples-run.lock");
-const MAX_PORT_SEARCH_ATTEMPTS = 100;
 const PORT_RANGE_START = 4600;
 const OUTPUT_TAIL_LINES = 25;
 const READY_MARKERS = [
@@ -45,6 +44,20 @@ interface RuntimeExample extends ExampleDefinition {
   args: string[];
   env: Record<string, string>;
 }
+
+// Fixed port registry — each framework owns a stable, predictable port.
+// Using PORT_RANGE_START + 1 so port 4600 remains free for the bridge manager.
+const EXAMPLE_PORTS: Record<string, number> = {
+  react: PORT_RANGE_START + 1,
+  vue: PORT_RANGE_START + 2,
+  sveltekit: PORT_RANGE_START + 3,
+  solid: PORT_RANGE_START + 4,
+  astro: PORT_RANGE_START + 5,
+  nextjs: PORT_RANGE_START + 6,
+  nuxt: PORT_RANGE_START + 7,
+  vanilla: PORT_RANGE_START + 8,
+  vinext: PORT_RANGE_START + 9,
+};
 
 const EXAMPLES: ExampleDefinition[] = [
   {
@@ -252,30 +265,6 @@ function isPortAvailable(port: number): Promise<boolean> {
   });
 }
 
-async function findAvailablePort(
-  startPort: number,
-  reservedPorts: Set<number>,
-): Promise<number> {
-  for (
-    let candidate = startPort;
-    candidate < startPort + MAX_PORT_SEARCH_ATTEMPTS;
-    candidate += 1
-  ) {
-    if (reservedPorts.has(candidate)) {
-      continue;
-    }
-
-    if (await isPortAvailable(candidate)) {
-      reservedPorts.add(candidate);
-      return candidate;
-    }
-  }
-
-  throw new Error(
-    `Could not find an open port starting at ${startPort} within +${MAX_PORT_SEARCH_ATTEMPTS} ports`,
-  );
-}
-
 function toRuntimeExample(
   definition: ExampleDefinition,
   resolvedPort: number,
@@ -294,14 +283,21 @@ function toRuntimeExample(
 async function resolveRuntimeExamples(
   definitions: ExampleDefinition[],
 ): Promise<RuntimeExample[]> {
-  const reservedPorts = new Set<number>();
   const resolvedExamples: RuntimeExample[] = [];
-  let cursor = PORT_RANGE_START;
 
   for (const definition of definitions) {
-    const resolvedPort = await findAvailablePort(cursor, reservedPorts);
-    resolvedExamples.push(toRuntimeExample(definition, resolvedPort));
-    cursor = resolvedPort + 1;
+    const port = EXAMPLE_PORTS[definition.id];
+    if (port === undefined) {
+      throw new Error(
+        `No port assigned for example "${definition.id}". Add it to EXAMPLE_PORTS.`,
+      );
+    }
+    if (!(await isPortAvailable(port))) {
+      throw new Error(
+        `Port ${port} is already in use (assigned to ${definition.name}). Stop whatever is using it and try again.`,
+      );
+    }
+    resolvedExamples.push(toRuntimeExample(definition, port));
   }
 
   return resolvedExamples;
@@ -368,11 +364,21 @@ function parseArguments(argv: string[]): {
   return { openBrowser, selectedExamples };
 }
 
+function killProcess(processHandle: ChildProcess): void {
+  const pid = processHandle.pid;
+  if (!pid) return;
+  if (platform() === "win32") {
+    // Kill the entire process tree on Windows so child processes
+    // (e.g. Turbopack workers, HMR servers) don't outlive the runner.
+    exec(`taskkill /F /T /PID ${pid}`, () => {});
+  } else {
+    processHandle.kill("SIGTERM");
+  }
+}
+
 function cleanupAndExit(code = 0) {
   log("\n\nShutting down all servers...", COLORS.yellow);
-  runningProcesses.forEach((processHandle) => {
-    processHandle.kill();
-  });
+  runningProcesses.forEach(killProcess);
   releaseRunLock();
   process.exit(code);
 }

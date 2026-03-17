@@ -163,9 +163,6 @@
       "eslint --config .config/eslint.config.mjs --fix",
       "prettier --config .config/.prettierrc --write --ignore-path .config/.prettierignore"
     ],
-    "*.cjs": [
-      "prettier --config .config/.prettierrc --write --ignore-path .config/.prettierignore"
-    ],
     "*.{json,css,html}": [
       "prettier --config .config/.prettierrc --write --ignore-path .config/.prettierignore"
     ],

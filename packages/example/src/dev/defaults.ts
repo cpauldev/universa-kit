@@ -2,7 +2,6 @@ import { existsSync } from "fs";
 import { basename, dirname, join } from "path";
 import type { RuntimeHelperOptions, UniversaBridgeOptions } from "universa-kit";
 import type {
-  UniversaClientConfig,
   UniversaPresetIdentity,
   UniversaPresetOptions,
 } from "universa-kit/preset";
@@ -14,7 +13,6 @@ export const EXAMPLE_RUNTIME_PORT_ENV_VAR = "EXAMPLE_RUNTIME_PORT";
 export const EXAMPLE_RUNTIME_FALLBACK_COMMAND = "example dev";
 export const EXAMPLE_INSTANCE_ID_FALLBACK = "example";
 export const EXAMPLE_CONFIG_PACKAGE_NAME = "example";
-export const EXAMPLE_CONFIG_CLIENT_MODULE = "example/overlay";
 
 type ExampleInstanceOptions = {
   id?: string;
@@ -114,15 +112,9 @@ export function resolveExampleBridgeOptions(
   } as UniversaBridgeOptions;
 }
 
-export type ExampleConfigOptions = Omit<
-  UniversaPresetOptions,
-  "identity" | "client"
-> & {
+export type ExampleConfigOptions = Omit<UniversaPresetOptions, "identity"> & {
   identity?: Omit<UniversaPresetIdentity, "packageName"> & {
     packageName?: string;
-  };
-  client?: Omit<UniversaClientConfig, "module"> & {
-    module?: string;
   };
 };
 
@@ -131,7 +123,6 @@ export function resolveExampleConfigOptions(
 ): UniversaPresetOptions {
   const {
     identity,
-    client,
     unsafeOverrides,
     composition,
     instanceId,
@@ -147,10 +138,6 @@ export function resolveExampleConfigOptions(
     identity: {
       packageName: identity?.packageName ?? EXAMPLE_CONFIG_PACKAGE_NAME,
       ...(identity?.variant ? { variant: identity.variant } : {}),
-    },
-    client: {
-      ...client,
-      module: client?.module ?? EXAMPLE_CONFIG_CLIENT_MODULE,
     },
     ...(unsafeOverrides ? { unsafeOverrides } : {}),
     ...(composition ? { composition } : {}),

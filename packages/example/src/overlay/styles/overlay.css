@@ -55,7 +55,7 @@
 
 @import "tailwindcss";
 
-/* Limit utility generation to overlay files that use worldality UI classes. */
+/* Limit utility generation to overlay files that use example UI classes. */
 @source "../OverlayPanel.tsx";
 @source "../ui/**/*.tsx";
 
@@ -63,7 +63,7 @@
 @custom-variant dark ([data-overlay-root="true"][data-theme=dark] &);
 
 /*
-  Semantic color tokens used by the worldality UI components.
+  Semantic color tokens used by the example UI components.
   Light-mode defaults live here. Dark mode overrides are in .overlay-root[data-theme="dark"].
 */
 @theme {

@@ -1,4 +1,5 @@
 import { example } from "example";
+import { resolve } from "path";
 import vinext from "vinext";
 import { defineConfig } from "vite";
 
@@ -12,6 +13,9 @@ export default defineConfig({
     },
   },
   resolve: {
+    alias: {
+      "@": resolve(__dirname, "src"),
+    },
     // Prevent duplicate React instances when packages are resolved from
     // multiple locations in the Bun workspace (mirrors vinext CLI auto-config).
     dedupe: [

@@ -7,6 +7,7 @@ export {
   attachBridgeToServer,
   attachBridgeToViteServer,
   createBridgeRewriteRoute,
+  createDirectRewriteRoute,
   createBridgeLifecycle,
   createViteBridgeLifecycle,
   ensureStandaloneBridgeSingleton,
