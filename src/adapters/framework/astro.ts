@@ -1,7 +1,6 @@
 import {
   type MiddlewareAdapterServer,
   type UniversaAdapterOptions,
-  buildClientBootstrapModuleSource,
   createBridgeLifecycle,
   resolveAdapterOptions,
 } from "../shared/adapter-utils.js";
@@ -17,31 +16,10 @@ export function createUniversaAstroIntegration(
 ): UniversaAstroIntegration {
   const resolvedOptions = resolveAdapterOptions(options);
   const lifecycle = createBridgeLifecycle(resolvedOptions);
-  const clientModule =
-    resolvedOptions.clientEnabled === false
-      ? undefined
-      : resolvedOptions.clientModule;
 
   return {
     name: resolvedOptions.adapterName,
     hooks: {
-      "astro:config:setup": (options: unknown) => {
-        const setupOptions = (options ?? {}) as {
-          command?: string;
-          injectScript?: (stage: unknown, content: string) => void;
-        };
-        const command = setupOptions.command;
-        const injectScript = setupOptions.injectScript;
-        if (clientModule && command === "dev" && injectScript) {
-          injectScript(
-            "page",
-            buildClientBootstrapModuleSource({
-              clientModule,
-              clientRuntimeContext: resolvedOptions.clientRuntimeContext,
-            }),
-          );
-        }
-      },
       "astro:server:setup": async (options: unknown) => {
         const server = (options as { server?: MiddlewareAdapterServer })
           ?.server;

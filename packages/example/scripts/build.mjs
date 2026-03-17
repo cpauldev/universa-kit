@@ -77,6 +77,13 @@ async function inlineOverlayCss() {
     );
   }
 
+  // Hoist "use client" to the top so Next.js webpack recognises this as a
+  // client boundary (tsc emits it inline; Next.js requires it at line 1).
+  patched = patched
+    .replace(/"use client";?\n?/g, "")
+    .replace(/'use client';?\n?/g, "");
+  patched = '"use client";\n' + patched;
+
   await fs.writeFile(overlayBundlePath, patched);
 }
 

@@ -1,1 +1,1 @@
-export type { FileTreeNode, FileMetadata } from "./server";
+export type { FileTreeNode, FileMetadata } from "./server.js";

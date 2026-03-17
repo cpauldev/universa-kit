@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import "example/overlay";
 import { onMounted, onUnmounted, ref } from "vue";
 
 import { mountExampleDashboard } from "example-ui/dashboard-client";

@@ -13,6 +13,8 @@ export interface UniversaBridgeOptions extends RuntimeHelperOptions {
   eventHeartbeatIntervalMs?: number;
   proxyRuntimeWebSocket?: boolean;
   instance?: UniversaBridgeInstance;
+  /** Additional URL path prefixes to proxy directly to the runtime (e.g. ["/dashboard"]). */
+  additionalProxyPaths?: string[];
 }
 
 export type ResolvedBridgeOptions = Required<

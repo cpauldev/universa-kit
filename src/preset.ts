@@ -72,7 +72,6 @@ import {
 
 export type {
   UniversaCompositionMode,
-  UniversaClientConfig,
   UniversaPresetIdentity,
   UniversaPresetOptions,
 } from "./preset-registry.js";
@@ -215,59 +214,8 @@ function guardVitePlugin(
 ): VitePlugin {
   if (!isFrameworkActive) return plugin;
 
-  const guardedTransform = (() => {
-    const transformIndexHtml = (plugin as Record<string, unknown>)
-      .transformIndexHtml as
-      | {
-          order?: "pre" | "post";
-          handler?: (...args: unknown[]) => unknown;
-        }
-      | ((...args: unknown[]) => unknown)
-      | undefined;
-
-    if (!transformIndexHtml) return transformIndexHtml;
-
-    if (typeof transformIndexHtml === "function") {
-      return (...args: unknown[]) => {
-        if (!isFrameworkActive()) return [];
-        return transformIndexHtml(...args);
-      };
-    }
-
-    if (typeof transformIndexHtml.handler !== "function") {
-      return transformIndexHtml;
-    }
-
-    return {
-      ...transformIndexHtml,
-      handler: (...args: unknown[]) => {
-        if (!isFrameworkActive()) return [];
-        return transformIndexHtml.handler?.(...args);
-      },
-    };
-  })();
-
   return {
     ...plugin,
-    resolveId: (...args: unknown[]) => {
-      if (!isFrameworkActive()) return undefined;
-      return (
-        plugin as { resolveId?: (...args: unknown[]) => unknown }
-      ).resolveId?.(...args);
-    },
-    load: (...args: unknown[]) => {
-      if (!isFrameworkActive()) return undefined;
-      return (plugin as { load?: (...args: unknown[]) => unknown }).load?.(
-        ...args,
-      );
-    },
-    transform: (...args: unknown[]) => {
-      if (!isFrameworkActive()) return undefined;
-      return (
-        plugin as { transform?: (...args: unknown[]) => unknown }
-      ).transform?.(...args);
-    },
-    transformIndexHtml: guardedTransform,
     configureServer: async (...args: unknown[]) => {
       if (!isFrameworkActive()) return;
       return (
@@ -292,31 +240,6 @@ function mergeAdapterOptions<T extends object>(
     merged as { bridgePathPrefix?: string; rewriteSource?: string }
   ).bridgePathPrefix = nextBridgePathPrefix;
   (merged as { rewriteSource?: string }).rewriteSource = nextRewriteSource;
-
-  const nextClientEnabled =
-    (merged as { clientEnabled?: boolean }).clientEnabled ??
-    (baseOptions as { clientEnabled?: boolean }).clientEnabled;
-  const nextClientAutoMount =
-    (merged as { clientAutoMount?: boolean }).clientAutoMount ??
-    (baseOptions as { clientAutoMount?: boolean }).clientAutoMount;
-
-  const runtimeContext = (
-    merged as {
-      clientRuntimeContext?: {
-        bridgePathPrefix: string;
-        clientEnabled: boolean;
-        autoMount: boolean;
-      };
-    }
-  ).clientRuntimeContext;
-
-  if (runtimeContext) {
-    runtimeContext.bridgePathPrefix =
-      nextBridgePathPrefix ?? runtimeContext.bridgePathPrefix;
-    runtimeContext.clientEnabled =
-      nextClientEnabled ?? runtimeContext.clientEnabled;
-    runtimeContext.autoMount = nextClientAutoMount ?? runtimeContext.autoMount;
-  }
 
   return merged;
 }

@@ -1,18 +1,8 @@
 import type { UniversaAdapterOptions } from "./adapters/shared/adapter-utils.js";
-import {
-  type UniversaClientRuntimeContext,
-  createClientRuntimeContext,
-} from "./client/runtime-context.js";
 
 export type UniversaPresetIdentity = {
   packageName: string;
   variant?: string;
-};
-
-export type UniversaClientConfig = {
-  module?: string;
-  enabled?: boolean;
-  autoMount?: boolean;
 };
 
 export type UniversaCompositionMode = "registry" | "local";
@@ -24,20 +14,11 @@ type UnsafeOverrides = Partial<{
 
 type BasePresetAdapterOptions = Omit<
   UniversaAdapterOptions,
-  | "clientModule"
-  | "clientEnabled"
-  | "clientAutoMount"
-  | "clientRuntimeContext"
-  | "namespaceId"
-  | "bridgePathPrefix"
-  | "rewriteSource"
-  | "adapterName"
-  | "nextBridgeGlobalKey"
+  "bridgePathPrefix" | "rewriteSource" | "adapterName" | "nextBridgeGlobalKey"
 >;
 
 export type UniversaPresetOptions = BasePresetAdapterOptions & {
   identity: UniversaPresetIdentity;
-  client?: UniversaClientConfig;
   composition?: UniversaCompositionMode;
   instanceId?: string;
   unsafeOverrides?: UnsafeOverrides;
@@ -57,8 +38,6 @@ export interface UniversaPresetRegistration {
   identity: UniversaPresetIdentity;
   composition: UniversaCompositionMode;
   namespace: UniversaNamespaceMetadata;
-  clientModule?: string;
-  clientRuntimeContext?: UniversaClientRuntimeContext;
   effectiveOptions: UniversaAdapterOptions;
 }
 
@@ -173,7 +152,6 @@ function reserveNamespace(
 function createFingerprint(options: UniversaPresetOptions): string {
   return stableStringify({
     identity: options.identity,
-    client: options.client,
     composition: options.composition,
     instanceId: options.instanceId,
     unsafeOverrides: options.unsafeOverrides,
@@ -185,66 +163,31 @@ function buildEffectiveOptions(
   options: UniversaPresetOptions,
   namespaceId: string,
   canonicalIdentity: string,
-): {
-  clientModule?: string;
-  clientRuntimeContext?: UniversaClientRuntimeContext;
-  effectiveOptions: UniversaAdapterOptions;
-} {
+): UniversaAdapterOptions {
   const {
     identity: _identity,
-    client,
     composition: _composition,
     instanceId: _instanceId,
     unsafeOverrides,
     ...adapterBaseOptions
   } = options;
 
-  const clientModule = client?.module?.trim() || undefined;
-  const clientEnabled = client?.enabled ?? Boolean(clientModule);
-  const clientAutoMount = client?.autoMount ?? true;
-
   const defaultBridgePathPrefix = `${BRIDGE_PATH_PREFIX}/${namespaceId}`;
   const defaultRewriteSource = `${defaultBridgePathPrefix}/:path*`;
   const defaultAdapterName = `${ADAPTER_PREFIX}-${namespaceId}`;
   const defaultNextBridgeGlobalKey = `${NEXT_BRIDGE_GLOBAL_KEY_PREFIX}${namespaceId}`;
 
-  const bridgePathPrefix = defaultBridgePathPrefix;
-  const rewriteSource = defaultRewriteSource;
-  const adapterName = unsafeOverrides?.adapterName ?? defaultAdapterName;
-  const nextBridgeGlobalKey =
-    unsafeOverrides?.nextBridgeGlobalKey ?? defaultNextBridgeGlobalKey;
-
-  const clientRuntimeContext =
-    clientModule && clientEnabled
-      ? createClientRuntimeContext({
-          namespaceId,
-          bridgePathPrefix,
-          clientEnabled,
-          autoMount: clientAutoMount,
-        })
-      : undefined;
-
-  const effectiveOptions: UniversaAdapterOptions = {
+  return {
     ...adapterBaseOptions,
-    bridgePathPrefix,
-    rewriteSource,
-    adapterName,
-    nextBridgeGlobalKey,
-    namespaceId,
-    clientModule: clientEnabled ? clientModule : undefined,
-    clientEnabled,
-    clientAutoMount,
-    clientRuntimeContext,
+    bridgePathPrefix: defaultBridgePathPrefix,
+    rewriteSource: defaultRewriteSource,
+    adapterName: unsafeOverrides?.adapterName ?? defaultAdapterName,
+    nextBridgeGlobalKey:
+      unsafeOverrides?.nextBridgeGlobalKey ?? defaultNextBridgeGlobalKey,
     instance: {
       id: namespaceId,
       label: canonicalIdentity,
     },
-  };
-
-  return {
-    ...(clientModule ? { clientModule } : {}),
-    ...(clientRuntimeContext ? { clientRuntimeContext } : {}),
-    effectiveOptions,
   };
 }
 
@@ -282,8 +225,11 @@ export function registerUniversaPreset(
     keyPrefix: `universa:client:${namespaceId}`,
   };
 
-  const { clientModule, clientRuntimeContext, effectiveOptions } =
-    buildEffectiveOptions(options, namespaceId, identity.canonicalIdentity);
+  const effectiveOptions = buildEffectiveOptions(
+    options,
+    namespaceId,
+    identity.canonicalIdentity,
+  );
 
   const registration: UniversaPresetRegistration = {
     id: registrationId,
@@ -295,8 +241,6 @@ export function registerUniversaPreset(
     },
     composition,
     namespace,
-    ...(clientModule ? { clientModule } : {}),
-    ...(clientRuntimeContext ? { clientRuntimeContext } : {}),
     effectiveOptions,
   };
 

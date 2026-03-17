@@ -1,4 +1,4 @@
-import { BRIDGE_BASE_PATH } from "../overlay/constants";
+import { BRIDGE_BASE_PATH } from "../overlay/constants.js";
 import type {
   DashboardDiscoveredInstance,
   DashboardDiscoveryConfig,
@@ -7,7 +7,7 @@ import type {
   DashboardFrameworkId,
   DashboardFrameworkNavItem,
   DashboardHealthPayload,
-} from "./types";
+} from "./types.js";
 
 export const DASHBOARD_FRAMEWORKS: DashboardFrameworkDefinition[] = [
   { id: "react", label: "React", defaultPort: 5173 },

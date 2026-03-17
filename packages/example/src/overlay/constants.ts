@@ -4,7 +4,11 @@ import {
   resolveClientRuntimeContext,
 } from "universa-kit/client-runtime";
 
-import type { OverlayPosition, OverlaySettings, TabDefinition } from "./types";
+import type {
+  OverlayPosition,
+  OverlaySettings,
+  TabDefinition,
+} from "./types.js";
 
 export const OVERLAY_MODULE_SPECIFIER = "example/overlay";
 

@@ -93,7 +93,7 @@
   ],
   "scripts": {
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
-    "build": "bun run clean && bun x tsc -p tsconfig.build.json && node -e \"const{cpSync,mkdirSync}=require('fs');cpSync('src/adapters/framework/client-inject.cjs','dist/adapters/framework/client-inject.cjs')\"",
+    "build": "bun run clean && bun x tsc -p tsconfig.build.json",
     "typecheck": "bun x tsc -p tsconfig.build.json --noEmit",
     "prepublishOnly": "bun run build && bun run test && bun run typecheck",
     "lint": "bun run lint:eslint && bun run typecheck",
@@ -161,9 +161,6 @@
   "lint-staged": {
     "*.{ts,tsx,js,jsx,mjs}": [
       "eslint --config .config/eslint.config.mjs --fix",
-      "prettier --config .config/.prettierrc --write --ignore-path .config/.prettierignore"
-    ],
-    "*.cjs": [
       "prettier --config .config/.prettierrc --write --ignore-path .config/.prettierignore"
     ],
     "*.{json,css,html}": [

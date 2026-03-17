@@ -7,7 +7,7 @@ import {
   ChevronsUpDownIcon,
 } from "lucide-react";
 
-import { cn, getOverlayPortalContainer } from "./utils";
+import { cn, getOverlayPortalContainer } from "./utils.js";
 
 const Select = SelectPrimitive.Root;
 

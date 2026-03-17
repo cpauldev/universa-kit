@@ -39,8 +39,7 @@ function installMockWindow(search = ""): { storage: Map<string, string> } {
     },
   };
 
-  (globalThis as typeof globalThis & { window?: unknown }).window =
-    mockWindow as unknown;
+  (globalThis as Record<string, unknown>).window = mockWindow;
   return { storage };
 }
 
@@ -50,7 +49,7 @@ afterEach(() => {
     window?: unknown;
   };
   delete runtimeGlobal[GLOBAL_CONTEXTS_KEY];
-  delete runtimeGlobal.window;
+  delete (runtimeGlobal as Record<string, unknown>).window;
 });
 
 describe("client runtime context", () => {

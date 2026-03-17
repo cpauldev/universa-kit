@@ -1,6 +1,6 @@
 import type { UniversaBridgeState } from "universa-kit";
 
-import { BRIDGE_BASE_PATH } from "../overlay/constants";
+import { BRIDGE_BASE_PATH } from "../overlay/constants.js";
 import {
   formatBytes,
   formatDate,
@@ -8,8 +8,8 @@ import {
   formatPhase,
   formatTransportState,
   formatUptime,
-} from "../overlay/format";
-import type { FileMetadata } from "../overlay/types";
+} from "../overlay/format.js";
+import type { FileMetadata } from "../overlay/types.js";
 import type {
   DashboardActionId,
   DashboardActionState,
@@ -22,7 +22,7 @@ import type {
   DashboardTableSection,
   DashboardTransportState,
   DashboardWebSocketSnapshot,
-} from "./types";
+} from "./types.js";
 
 const DEFAULT_FALLBACK_COMMAND = "example dev";
 const DEFAULT_FAILURE_THRESHOLD = 1;

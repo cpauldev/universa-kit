@@ -4,9 +4,7 @@ import {
   type MiddlewareAdapterServer,
   type UniversaAdapterOptions,
   appendPlugin,
-  buildClientBootstrapModuleSource,
   createBridgeLifecycle,
-  createClientBootstrapVirtualIds,
   resolveAdapterOptions,
 } from "../shared/adapter-utils.js";
 
@@ -25,49 +23,12 @@ export function createUniversaNuxtModule(
   options: UniversaNuxtOptions = {},
 ): UniversaNuxtModule {
   const resolvedOptions = resolveAdapterOptions(options);
-  const clientModule =
-    resolvedOptions.clientEnabled === false
-      ? undefined
-      : resolvedOptions.clientModule;
-  const virtualIds = createClientBootstrapVirtualIds(
-    resolvedOptions.namespaceId ?? resolvedOptions.adapterName,
-  );
   const lifecycle = createBridgeLifecycle(resolvedOptions);
   let lastViteServer: MiddlewareAdapterServer | null = null;
 
   const bridgePlugin = {
     name: resolvedOptions.adapterName,
     enforce: "pre" as const,
-
-    resolveId(id: string) {
-      if (clientModule && id === virtualIds.virtualId) {
-        return virtualIds.resolvedVirtualId;
-      }
-    },
-
-    load(id: string) {
-      if (clientModule && id === virtualIds.resolvedVirtualId) {
-        return buildClientBootstrapModuleSource({
-          clientModule,
-          clientRuntimeContext: resolvedOptions.clientRuntimeContext,
-          acceptHotUpdate: true,
-        });
-      }
-    },
-
-    transformIndexHtml: {
-      order: "pre" as const,
-      handler(_html: string, ctx: { server?: unknown }) {
-        if (!clientModule || !ctx.server) return [];
-        return [
-          {
-            tag: "script",
-            attrs: { type: "module", src: virtualIds.publicSpecifier },
-            injectTo: "head-prepend" as const,
-          },
-        ];
-      },
-    },
 
     async configureServer(server: MiddlewareAdapterServer) {
       lastViteServer = server;
@@ -99,50 +60,8 @@ export function createUniversaNuxtModule(
     };
     const nuxtOptions = (nuxt.options || {}) as {
       dev?: boolean;
-      build?: { templates?: unknown[] };
-      plugins?: unknown[];
     };
     if (!nuxtOptions.dev) return;
-
-    // Nuxt does not reliably run transformIndexHtml on every navigation path.
-    // Register a client plugin to ensure the client module is always imported.
-    if (clientModule) {
-      const templateFilename = `${resolvedOptions.adapterName}-client.client.mjs`;
-      const templatePath = `#build/${templateFilename}`;
-      const buildTemplates = (nuxtOptions.build ??= {}).templates ?? [];
-      (nuxtOptions.build as { templates: unknown[] }).templates =
-        buildTemplates;
-
-      const hasTemplate = buildTemplates.some((entry) => {
-        if (!entry || typeof entry !== "object") return false;
-        const template = entry as { filename?: unknown };
-        return template.filename === templateFilename;
-      });
-
-      if (!hasTemplate) {
-        buildTemplates.push({
-          filename: templateFilename,
-          write: true,
-          getContents: () =>
-            buildClientBootstrapModuleSource({
-              clientModule,
-              clientRuntimeContext: resolvedOptions.clientRuntimeContext,
-              footerLines: ["export default () => {};"],
-            }),
-        });
-      }
-
-      const plugins = nuxtOptions.plugins ?? [];
-      nuxtOptions.plugins = plugins;
-      const hasClientPlugin = plugins.some((entry) => {
-        if (!entry || typeof entry !== "object") return false;
-        const plugin = entry as { src?: unknown };
-        return plugin.src === templatePath;
-      });
-      if (!hasClientPlugin) {
-        plugins.push({ src: templatePath, mode: "client" });
-      }
-    }
 
     const hook = (nuxt.hook || (() => undefined)) as (
       name: string,

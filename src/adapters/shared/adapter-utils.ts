@@ -12,7 +12,6 @@ import {
   type StandaloneBridgeServer,
   startStandaloneUniversaBridgeServer,
 } from "../../bridge/standalone.js";
-import type { UniversaClientRuntimeContext } from "../../client/runtime-context.js";
 
 export const UNIVERSA_DEV_ADAPTER_NAME = "universa-bridge";
 export const UNIVERSA_BRIDGE_PATH_PREFIX = "/__universa";
@@ -41,17 +40,9 @@ export interface UniversaNormalizedRewrites {
 export interface UniversaAdapterOptions extends UniversaBridgeOptions {
   adapterName?: string;
   rewriteSource?: string;
+  /** Additional rewrite sources to proxy through the bridge (e.g. "/dashboard/:path*"). */
+  additionalRewriteSources?: string[];
   nextBridgeGlobalKey?: string;
-  /** Package specifier for the client module to auto-inject (e.g. "example/overlay"). */
-  clientModule?: string;
-  /** Controls whether adapter-level client injection is enabled. */
-  clientEnabled?: boolean;
-  /** Controls whether client modules should auto-mount once injected. */
-  clientAutoMount?: boolean;
-  /** Optional namespaced context published to client modules before loading. */
-  clientRuntimeContext?: UniversaClientRuntimeContext;
-  /** Stable namespace id for collision-proof adapter internals. */
-  namespaceId?: string;
   /** Internal framework-level activation guard used by preset composition. */
   _frameworkIsActive?: () => boolean;
 }
@@ -59,12 +50,8 @@ export interface UniversaAdapterOptions extends UniversaBridgeOptions {
 interface ResolvedUniversaAdapterOptions extends UniversaBridgeOptions {
   adapterName: string;
   rewriteSource: string;
+  additionalRewriteSources: string[];
   nextBridgeGlobalKey?: string;
-  clientModule?: string;
-  clientEnabled: boolean;
-  clientAutoMount: boolean;
-  clientRuntimeContext?: UniversaClientRuntimeContext;
-  namespaceId?: string;
   _frameworkIsActive?: () => boolean;
 }
 
@@ -89,12 +76,8 @@ export function resolveAdapterOptions(
     adapterName: options.adapterName ?? UNIVERSA_DEV_ADAPTER_NAME,
     bridgePathPrefix,
     rewriteSource: buildBridgeRewriteSource(bridgePathPrefix),
+    additionalRewriteSources: options.additionalRewriteSources ?? [],
     nextBridgeGlobalKey: options.nextBridgeGlobalKey,
-    clientModule: options.clientModule,
-    clientEnabled: options.clientEnabled ?? true,
-    clientAutoMount: options.clientAutoMount ?? true,
-    clientRuntimeContext: options.clientRuntimeContext,
-    namespaceId: options.namespaceId,
     _frameworkIsActive: options._frameworkIsActive,
   };
 }
@@ -105,16 +88,15 @@ function toBridgeOptions(
   const {
     adapterName: _adapterName,
     rewriteSource: _rewriteSource,
+    additionalRewriteSources,
     nextBridgeGlobalKey: _nextBridgeGlobalKey,
-    clientModule: _clientModule,
-    clientEnabled: _clientEnabled,
-    clientAutoMount: _clientAutoMount,
-    clientRuntimeContext: _clientRuntimeContext,
-    namespaceId: _namespaceId,
     _frameworkIsActive: _frameworkIsActive,
     ...bridgeOptions
   } = options;
-  return bridgeOptions;
+  const additionalProxyPaths = (additionalRewriteSources ?? []).map((source) =>
+    source.endsWith("/:path*") ? source.slice(0, -"/:path*".length) : source,
+  );
+  return { ...bridgeOptions, additionalProxyPaths };
 }
 
 export async function attachBridgeToServer(
@@ -256,55 +238,20 @@ export function createBridgeRewriteRoute(
   };
 }
 
+/**
+ * Creates a rewrite rule for an arbitrary path prefix, bypassing bridge path
+ * normalization. Use for non-bridge paths served directly by the runtime.
+ */
+export function createDirectRewriteRoute(
+  baseUrl: string,
+  rewriteSource: string,
+): UniversaRewriteRule {
+  const source = rewriteSource.endsWith("/:path*")
+    ? rewriteSource
+    : `${rewriteSource}/:path*`;
+  return { source, destination: `${baseUrl}${source}` };
+}
+
 export function appendPlugin<T>(plugins: T[] | undefined, plugin: T): T[] {
   return [...(plugins ?? []), plugin];
-}
-
-export function createClientBootstrapVirtualIds(namespaceId: string): {
-  virtualId: string;
-  resolvedVirtualId: string;
-  publicSpecifier: string;
-} {
-  const virtualId = `universa-kit:client-init:${namespaceId}`;
-  return {
-    virtualId,
-    resolvedVirtualId: `\0${virtualId}`,
-    publicSpecifier: `/@id/${virtualId}`,
-  };
-}
-
-export function buildClientRuntimeContextRegistration(
-  clientModule: string,
-  context?: UniversaClientRuntimeContext,
-): string[] {
-  if (!context) return [];
-
-  return [
-    `globalThis.__UNIVERSA_CLIENT_RUNTIME_CONTEXTS__ ??= {};`,
-    `globalThis.__UNIVERSA_CLIENT_RUNTIME_CONTEXTS__[${JSON.stringify(clientModule)}] = ${JSON.stringify(context)};`,
-  ];
-}
-
-export function buildClientBootstrapModuleSource(options: {
-  clientModule: string;
-  clientRuntimeContext?: UniversaClientRuntimeContext;
-  acceptHotUpdate?: boolean;
-  footerLines?: string[];
-}): string {
-  const lines = buildClientRuntimeContextRegistration(
-    options.clientModule,
-    options.clientRuntimeContext,
-  );
-
-  lines.push(`import ${JSON.stringify(options.clientModule)};`);
-
-  if (options.acceptHotUpdate) {
-    lines.push(`if (import.meta.hot) { import.meta.hot.accept(() => {}); }`);
-  }
-
-  if (options.footerLines?.length) {
-    lines.push(...options.footerLines);
-  }
-
-  return lines.join("\n");
 }

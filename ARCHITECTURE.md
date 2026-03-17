@@ -54,7 +54,6 @@ Preset API for tool authors to expose one integration entrypoint.
 - normalizes identity -> namespace (`/__universa/<namespaceId>`)
 - computes effective adapter options (bridge prefix, adapter name, next bridge key)
 - composes framework adapters through registry mode while keeping imperative adapters local
-- derives optional client runtime context metadata for auto-mount behavior
 
 ### 5. Client SDK (`src/client/*`)
 

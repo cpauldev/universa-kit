@@ -1,4 +1,5 @@
 import "example-ui/layout.css";
+import "example/overlay";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

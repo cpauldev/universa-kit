@@ -152,30 +152,27 @@ For expanded API coverage (including lifecycle helpers, runtime-context utilitie
 
 Most adapter APIs accept shared bridge/runtime options.
 
-| Option                     | Type                                  | Default                   | Notes                                                             |
-| -------------------------- | ------------------------------------- | ------------------------- | ----------------------------------------------------------------- |
-| `bridgePathPrefix`         | `string`                              | `"/__universa"`           | Normalized to stay rooted under `/__universa`.                    |
-| `autoStart`                | `boolean`                             | `true`                    | Auto-start runtime on state/proxy/events paths.                   |
-| `command`                  | `string`                              | none                      | Required for managed runtime start/restart.                       |
-| `args`                     | `string[]`                            | `[]`                      | Runtime command args.                                             |
-| `cwd`                      | `string`                              | `process.cwd()`           | Runtime working directory.                                        |
-| `env`                      | `Record<string, string \| undefined>` | none                      | Extra runtime environment variables.                              |
-| `host`                     | `string`                              | `"127.0.0.1"`             | Runtime host binding.                                             |
-| `healthPath`               | `string`                              | `"/api/version"`          | Runtime health probe endpoint.                                    |
-| `startTimeoutMs`           | `number`                              | `15000`                   | Runtime startup timeout.                                          |
-| `runtimePortEnvVar`        | `string`                              | `"UNIVERSA_RUNTIME_PORT"` | Env var populated with selected runtime port.                     |
-| `fallbackCommand`          | `string`                              | `"universa dev"`          | Returned in some runtime-control error payloads.                  |
-| `eventHeartbeatIntervalMs` | `number`                              | `30000`                   | WS heartbeat for stale client cleanup.                            |
-| `proxyRuntimeWebSocket`    | `boolean`                             | `true`                    | Enables runtime websocket proxying through bridge events socket.  |
-| `instance`                 | `{ id: string; label?: string }`      | none                      | Optional instance metadata in bridge state/health.                |
-| `clientModule`             | `string`                              | none                      | Dev-only side-effect module injection (typically set by presets). |
+| Option                     | Type                                  | Default                   | Notes                                                                                             |
+| -------------------------- | ------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------- |
+| `bridgePathPrefix`         | `string`                              | `"/__universa"`           | Normalized to stay rooted under `/__universa`.                                                    |
+| `autoStart`                | `boolean`                             | `true`                    | Auto-start runtime on state/proxy/events paths.                                                   |
+| `command`                  | `string`                              | none                      | Required for managed runtime start/restart.                                                       |
+| `args`                     | `string[]`                            | `[]`                      | Runtime command args.                                                                             |
+| `cwd`                      | `string`                              | `process.cwd()`           | Runtime working directory.                                                                        |
+| `env`                      | `Record<string, string \| undefined>` | none                      | Extra runtime environment variables.                                                              |
+| `host`                     | `string`                              | `"127.0.0.1"`             | Runtime host binding.                                                                             |
+| `healthPath`               | `string`                              | `"/api/version"`          | Runtime health probe endpoint.                                                                    |
+| `startTimeoutMs`           | `number`                              | `15000`                   | Runtime startup timeout.                                                                          |
+| `runtimePortEnvVar`        | `string`                              | `"UNIVERSA_RUNTIME_PORT"` | Env var populated with selected runtime port.                                                     |
+| `fallbackCommand`          | `string`                              | `"universa dev"`          | Returned in some runtime-control error payloads.                                                  |
+| `eventHeartbeatIntervalMs` | `number`                              | `30000`                   | WS heartbeat for stale client cleanup.                                                            |
+| `proxyRuntimeWebSocket`    | `boolean`                             | `true`                    | Enables runtime websocket proxying through bridge events socket.                                  |
+| `instance`                 | `{ id: string; label?: string }`      | none                      | Optional instance metadata in bridge state/health.                                                |
+| `additionalRewriteSources` | `string[]`                            | `[]`                      | Extra path prefixes proxied directly to the runtime (e.g. `["/dashboard/:path*"]`). Next.js only. |
 
 ### Preset-specific options (`createUniversaPreset`)
 
 - `identity` (**required**): `{ packageName: string; variant?: string }`
-- `client.module`: module specifier to inject in development
-- `client.enabled`: enable/disable client module injection
-- `client.autoMount`: default auto-mount hint
 - `composition`: `"registry" | "local"`
 - `instanceId`: stable suffix for multiple preset instances
 - `unsafeOverrides`: advanced adapter identity overrides
@@ -218,10 +215,6 @@ export function myTool() {
     command: "mytool",
     args: ["dev"],
     fallbackCommand: "mytool dev",
-    client: {
-      module: "mytool/overlay",
-      autoMount: true,
-    },
   });
 }
 ```

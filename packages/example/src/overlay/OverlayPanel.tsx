@@ -32,9 +32,9 @@ import {
   type DashboardTransportState,
   type DashboardWebSocketSnapshot,
   buildRuntimeSections,
-} from "../dashboard/index";
-import { OVERLAY_POSITIONS, TABS } from "./constants";
-import { formatBytes, formatDate } from "./format";
+} from "../dashboard/index.js";
+import { OVERLAY_POSITIONS, TABS } from "./constants.js";
+import { formatBytes, formatDate } from "./format.js";
 import type {
   FileMetadata,
   OverlayAction,
@@ -44,30 +44,38 @@ import type {
   OverlayTab,
   OverlayTheme,
   TabDefinition,
-} from "./types";
-import { Badge } from "./ui/badge";
-import { Button } from "./ui/button";
-import { Checkbox } from "./ui/checkbox";
+} from "./types.js";
+import { Badge } from "./ui/badge.js";
+import { Button } from "./ui/button.js";
+import { Checkbox } from "./ui/checkbox.js";
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "./ui/empty";
-import { FileTree, filterFileTree } from "./ui/file-tree";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "./ui/input-group";
-import { ScrollArea } from "./ui/scroll-area";
+} from "./ui/empty.js";
+import { FileTree, filterFileTree } from "./ui/file-tree.js";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "./ui/input-group.js";
+import { ScrollArea } from "./ui/scroll-area.js";
 import {
   Select,
   SelectItem,
   SelectPopup,
   SelectTrigger,
   SelectValue,
-} from "./ui/select";
-import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "./ui/sidebar";
-import { Tooltip, TooltipPopup, TooltipTrigger } from "./ui/tooltip";
-import { cn } from "./ui/utils";
+} from "./ui/select.js";
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "./ui/sidebar.js";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "./ui/tooltip.js";
+import { cn } from "./ui/utils.js";
 
 // ── Status helpers ────────────────────────────────────────────────────────────
 

@@ -3,9 +3,9 @@ import { resolveClientAutoMount } from "universa-kit/client-runtime";
 import {
   OVERLAY_INSTANCE_GLOBAL_KEY,
   OVERLAY_MODULE_SPECIFIER,
-} from "./constants";
-import { ExampleOverlay } from "./overlay";
-import type { OverlayMountOptions } from "./types";
+} from "./constants.js";
+import { ExampleOverlay } from "./overlay.js";
+import type { OverlayMountOptions } from "./types.js";
 
 // ── Mount policy ─────────────────────────────────────────────────────────────
 
@@ -127,10 +127,10 @@ export function unmountOverlay(): void {
 }
 
 export { ExampleOverlay };
-export { createExampleApi } from "./api";
-export type { ExampleApi } from "./api";
+export { createExampleApi } from "./api.js";
+export type { ExampleApi } from "./api.js";
 export type { OverlayMountOptions };
-export type { UniversaBridgeState, UniversaRuntimeStatus } from "./types";
+export type { UniversaBridgeState, UniversaRuntimeStatus } from "./types.js";
 
 // Auto-mount when imported as the adapter-injected overlay entry.
 if (isBrowserRuntime() && shouldMountOverlay()) {

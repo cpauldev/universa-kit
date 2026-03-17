@@ -3,7 +3,7 @@ export {
   createDashboardDiscoveryController,
   createInitialDiscoveryState,
   resolveDiscoveryConfig,
-} from "./discovery";
+} from "./discovery.js";
 export {
   buildFileMetadataRows,
   buildRuntimeSections,
@@ -13,7 +13,7 @@ export {
   resolveDashboardLiveStateOnSuccess,
   resolveDashboardStatusBadge,
   resolveDashboardStatusSummary,
-} from "./sections";
+} from "./sections.js";
 export {
   formatBytes,
   formatDate,
@@ -21,8 +21,8 @@ export {
   formatPhase,
   formatTransportState,
   formatUptime,
-} from "../overlay/format";
-export { createDashboardController } from "./controller";
+} from "../overlay/format.js";
+export { createDashboardController } from "./controller.js";
 export type {
   DashboardActionId,
   DashboardActionState,
@@ -44,4 +44,4 @@ export type {
   DashboardTableSection,
   DashboardTransportState,
   DashboardWebSocketSnapshot,
-} from "./types";
+} from "./types.js";

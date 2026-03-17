@@ -24,7 +24,7 @@ import {
   type UniversaBridgeOptions,
   resolveBridgeOptions,
 } from "./options.js";
-import { proxyToRuntime } from "./proxy.js";
+import { proxyToRuntime, proxyToRuntimeRaw } from "./proxy.js";
 import { createRouteKey, matchBridgeRoute } from "./router.js";
 import {
   handleRuntimeControlRoute,
@@ -156,6 +156,15 @@ export class UniversaBridge {
     res: ServerResponse,
     next?: (error?: unknown) => void,
   ): Promise<void> {
+    const url = req.url ?? "/";
+    const urlPath = url.split("?")[0];
+    for (const prefix of this.#options.additionalProxyPaths ?? []) {
+      if (urlPath === prefix || urlPath.startsWith(prefix + "/")) {
+        await proxyToRuntimeRaw(req, res, url, this.getProxyContext());
+        return;
+      }
+    }
+
     const match = matchBridgeRoute(req, this.#options.bridgePathPrefix);
     if (!match) {
       next?.();
