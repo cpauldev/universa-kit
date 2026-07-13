@@ -30,6 +30,8 @@ export interface UniversalBridgeHealth extends UniversalBridgeState {
 
 export interface UniversalEventsSubscriptionOptions {
   onError?: (error: unknown) => void;
+  onOpen?: () => void;
+  onClose?: () => void;
 }
 
 export interface UniversalWebSocketLike {
@@ -263,13 +265,19 @@ export function createUniversalClient(
       const onError = (...args: unknown[]) => {
         subscriptionOptions?.onError?.(args.length > 1 ? args : args[0]);
       };
+      const onOpen = () => subscriptionOptions?.onOpen?.();
+      const onClose = () => subscriptionOptions?.onClose?.();
 
       addSocketListener(socket, "message", onMessage);
       addSocketListener(socket, "error", onError);
+      addSocketListener(socket, "open", onOpen);
+      addSocketListener(socket, "close", onClose);
 
       return () => {
         removeSocketListener(socket, "message", onMessage);
         removeSocketListener(socket, "error", onError);
+        removeSocketListener(socket, "open", onOpen);
+        removeSocketListener(socket, "close", onClose);
         socket.close();
       };
     },

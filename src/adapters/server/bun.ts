@@ -56,7 +56,7 @@ interface UniversalBunSocketData {
   __universal?: UniversalBunSocketState;
 }
 
-type WebSocketPayload = string | ArrayBuffer | Blob | Uint8Array;
+type WebSocketPayload = string | ArrayBuffer | Blob | Uint8Array<ArrayBuffer>;
 
 export interface BunBridgeHandle {
   bridge: StandaloneBridgeServer["bridge"];
@@ -109,11 +109,11 @@ function normalizeWebSocketMessage(message: unknown): WebSocketPayload {
   if (message instanceof ArrayBuffer) return message;
   if (message instanceof Blob) return message;
   if (ArrayBuffer.isView(message)) {
-    return new Uint8Array(
-      message.buffer,
-      message.byteOffset,
-      message.byteLength,
+    const copy = new Uint8Array(message.byteLength);
+    copy.set(
+      new Uint8Array(message.buffer, message.byteOffset, message.byteLength),
     );
+    return copy;
   }
   if (message == null) return "";
   return String(message);

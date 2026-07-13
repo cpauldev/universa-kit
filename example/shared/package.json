@@ -1,0 +1,22 @@
+{
+  "name": "@example/shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "@example/universal-overlay": "workspace:*",
+    "lucide": "^1.23.0",
+    "tailwind-merge": "^3.6.0"
+  },
+  "exports": {
+    "./theme": "./src/theme.ts",
+    "./frameworks": "./src/frameworks.ts",
+    "./dashboard": "./src/dashboard.ts",
+    "./dashboard-client": "./src/dashboard-client.ts",
+    "./ui": "./src/ui/index.ts",
+    "./layout.css": "./src/layout.css",
+    "./base.css": "./src/base.css"
+  }
+}

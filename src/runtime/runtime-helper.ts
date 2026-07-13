@@ -108,6 +108,7 @@ export class RuntimeHelper {
   };
   #startPromise: Promise<UniversalRuntimeStatus> | null = null;
   #stopPromise: Promise<UniversalRuntimeStatus> | null = null;
+  #intentionalStops = new WeakSet<ResultPromise>();
   #listeners = new Set<(status: UniversalRuntimeStatus) => void>();
 
   constructor(options: RuntimeHelperOptions = {}) {
@@ -196,7 +197,10 @@ export class RuntimeHelper {
         });
 
         child.on("exit", () => {
-          if (this.#status.phase === "stopping") {
+          if (
+            this.#intentionalStops.has(child) ||
+            this.#status.phase === "stopping"
+          ) {
             this.setStatus({
               phase: "stopped",
               url: null,
@@ -217,6 +221,13 @@ export class RuntimeHelper {
         });
 
         child.catch((error) => {
+          // execa rejects when a process is terminated, including an intentional
+          // SIGTERM from stop(). Do not turn a normal lifecycle transition into
+          // a runtime error after the stopped status has been published.
+          if (this.#intentionalStops.has(child)) {
+            return;
+          }
+
           this.setStatus({
             phase: "error",
             url: null,
@@ -324,6 +335,7 @@ export class RuntimeHelper {
       }
 
       try {
+        this.#intentionalStops.add(child);
         child.kill("SIGTERM");
         await child;
       } catch {

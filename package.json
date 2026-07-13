@@ -1,12 +1,16 @@
 {
   "name": "universal-bridge",
-  "version": "0.3.0",
-  "description": "Universal bridge for in-browser development tools with cross-framework adapters, same-origin APIs, and runtime control.",
+  "version": "0.4.0",
+  "description": "A protocol for exposing and controlling local processes across frameworks and runtimes.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "browser": {
+        "types": "./dist/browser.d.ts",
+        "default": "./dist/browser.js"
+      },
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
@@ -15,8 +19,8 @@
       "default": "./dist/internal.js"
     },
     "./client": {
-      "types": "./dist/client/client.d.ts",
-      "default": "./dist/client/client.js"
+      "types": "./dist/client/index.d.ts",
+      "default": "./dist/client/index.js"
     },
     "./client-runtime": {
       "types": "./dist/client/runtime-context.d.ts",
@@ -81,7 +85,7 @@
   },
   "files": [
     "dist",
-    "banner.webp",
+    "assets",
     "README.md",
     "PROTOCOL.md",
     "ARCHITECTURE.md",
@@ -89,12 +93,13 @@
   ],
   "workspaces": [
     "packages/*",
-    "examples/*",
-    "examples/shared/*"
+    "example/*",
+    "example/shared",
+    "example/shared/*"
   ],
   "scripts": {
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
-    "build": "bun run clean && bun x tsc -p tsconfig.build.json",
+    "build": "bun run clean && bun x tsc -p tsconfig.build.json && node scripts/copy-client-entry-loader.mjs",
     "typecheck": "bun x tsc -p tsconfig.build.json --noEmit",
     "prepublishOnly": "bun run build && bun run test && bun run typecheck",
     "lint": "bun run lint:eslint && bun run typecheck",
@@ -106,9 +111,9 @@
     "test": "bun test",
     "test:watch": "bun test --watch",
     "prepare": "husky .config/.husky",
-    "examples": "bun scripts/examples/run.ts",
-    "examples:setup": "bun scripts/examples/setup.ts",
-    "verify:examples": "bun scripts/examples/verify.ts"
+    "example": "bun scripts/example/run.ts",
+    "example:setup": "bun scripts/example/setup.ts",
+    "verify:example": "bun scripts/example/verify.ts"
   },
   "keywords": [
     "devtools",
@@ -137,27 +142,27 @@
   "author": "Christian Paul",
   "license": "MIT",
   "dependencies": {
-    "execa": "^9.6.0",
-    "ws": "^8.19.0"
+    "execa": "^9.6.1",
+    "typescript": "^6.0.3",
+    "ws": "^8.21.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@trivago/prettier-plugin-sort-imports": "^6.0.2",
-    "@types/node": "^25.3.2",
-    "@types/ws": "^8.18.0",
-    "@vitejs/plugin-rsc": "^0.5.21",
-    "bun-types": "^1.3.10",
-    "eslint": "^10.0.2",
+    "@types/node": "^26.1.0",
+    "@types/ws": "^8.18.1",
+    "@vitejs/plugin-rsc": "^0.5.27",
+    "bun-types": "^1.3.14",
+    "eslint": "^10.6.0",
     "eslint-config-prettier": "^10.1.8",
-    "globals": "^17.3.0",
+    "globals": "^17.7.0",
     "husky": "^9.1.7",
-    "lint-staged": "^16.2.7",
-    "markdownlint-cli2": "^0.21.0",
-    "prettier": "^3.8.1",
-    "typescript": "^5.9.3",
-    "typescript-eslint": "^8.56.1",
-    "vinext": "^0.0.15",
-    "vite": "^7.3.1"
+    "lint-staged": "^17.0.8",
+    "markdownlint-cli2": "^0.23.0",
+    "prettier": "^3.9.4",
+    "typescript-eslint": "^8.62.1",
+    "vinext": "^1.0.0-beta.0",
+    "vite": "^8.1.3"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,mjs}": [

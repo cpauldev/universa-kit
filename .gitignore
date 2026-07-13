@@ -17,6 +17,7 @@ coverage/
 
 # Logs
 *.log
+.tmp-examples-run.lock
 
 # Environment files
 .env*.local

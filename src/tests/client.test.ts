@@ -78,8 +78,8 @@ describe("universal-bridge client", () => {
 
     expect(health.ok).toBe(true);
     expect(health.bridge).toBe(true);
-    expect(health.protocolVersion).toBe("1");
-    expect(state.protocolVersion).toBe("1");
+    expect(health.protocolVersion).toBe("2");
+    expect(state.protocolVersion).toBe("2");
     expect(state.runtime.phase).toBe("stopped");
   });
 
@@ -160,9 +160,9 @@ describe("universal-bridge client", () => {
     const runningEvent = await waitForEvent(
       events,
       (event) =>
-        event.type === "runtime-status" && event.status.phase === "running",
+        event.type === "bridge-state" && event.state.runtime.phase === "running",
     );
-    expect(runningEvent.protocolVersion).toBe("1");
+    expect(runningEvent.protocolVersion).toBe("2");
 
     unsubscribe();
   });

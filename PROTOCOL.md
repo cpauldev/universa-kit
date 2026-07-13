@@ -1,15 +1,27 @@
-# Universal Bridge Protocol (v1)
+# Universal Bridge Protocol (v2)
 
 This document is the normative contract for the Universal bridge protocol implemented in `src/bridge/*`.
 
 ## Versioning
 
-- Protocol version: `1`
-- Bridge state field: `protocolVersion: "1"`
-- Supported websocket subprotocol: `universal.v1+json`
+- Protocol version: `2`
+- Bridge state field: `protocolVersion: "2"`
+- Supported websocket subprotocol: `universal.v2+json`
 
 Backward-incompatible protocol changes must increment the protocol version.
 Adapter API naming changes alone do not require a protocol version bump unless route/event/error semantics change.
+
+## Migrating from v1
+
+Version 2 is not wire-compatible with version 1. Update WebSocket clients to offer `universal.v2+json` and replace the old runtime event payloads with the typed bridge event union:
+
+| v1 | v2 |
+| --- | --- |
+| `runtime-status` | `bridge-state` with `state: UniversalBridgeState` |
+| `runtime-error` | `bridge-error` with `error: string` |
+| no snapshot revision | `state.revision` for ordering snapshots |
+
+The `/events` endpoint carries bridge events only. Connect runtime WebSocket clients directly to their runtime channel rather than tunnelling them through the bridge events socket.
 
 ## Route prefix
 
@@ -48,7 +60,7 @@ Returns:
 {
   ok: true;
   bridge: true;
-  protocolVersion: "1";
+  protocolVersion: "2";
   transportState:
     | "disconnected"
     | "bridge_detecting"
@@ -68,7 +80,8 @@ Returns `UniversalBridgeState`:
 
 ```ts
 interface UniversalBridgeState {
-  protocolVersion: "1";
+  protocolVersion: "2";
+  revision: number;
   transportState:
     | "disconnected"
     | "bridge_detecting"
@@ -90,6 +103,8 @@ interface UniversalBridgeState {
   - `"helper"` when helper runtime control is available and no fallback command is configured
   - `"hybrid"` when helper runtime control is available with a fallback command present
 
+`revision` is monotonic for emitted state changes. Clients should retain the snapshot with the greatest revision when reconciling `/state` responses and `bridge-state` events.
+
 ## Runtime lifecycle semantics
 
 - `autoStart` defaults to `true`.
@@ -107,15 +122,15 @@ Required missing-command behavior for `start`/`restart`:
 
 Subprotocol behavior:
 
-- If `Sec-WebSocket-Protocol` is supplied, offered values must include `universal.v1+json`.
+- If `Sec-WebSocket-Protocol` is supplied, offered values must include `universal.v2+json`.
 - Unsupported offered protocol list is rejected with `426`.
-- If the header is supplied and accepted, the negotiated protocol is `universal.v1+json`.
+- If the header is supplied and accepted, the negotiated protocol is `universal.v2+json`.
 - If the header is omitted, the connection may still be accepted without negotiated subprotocol.
 
 Event union:
 
-- `runtime-status`
-- `runtime-error`
+- `bridge-state` (complete `UniversalBridgeState` snapshot)
+- `bridge-error` (transient bridge/proxy failure)
 
 All bridge events include:
 
@@ -125,8 +140,8 @@ All bridge events include:
 
 Connection behavior:
 
-- Clients receive an immediate `runtime-status` event after websocket upgrade completes.
-- Runtime websocket proxying (when enabled) reuses this same socket and keeps bridge event delivery alive even if upstream runtime websocket closes.
+- Clients receive an immediate `bridge-state` event after websocket upgrade completes.
+- The events socket carries typed bridge events only; runtime websocket traffic must use a separate channel.
 
 ## Error envelope
 
@@ -160,7 +175,7 @@ Guarantees:
 
 - Binary request body forwarding (no forced UTF-8 conversion)
 - Multi-value `Set-Cookie` forwarding
-- Upstream 5xx emits a `runtime-error` event
+- Upstream 5xx emits a `bridge-error` event
 - Upstream status/headers/body pass through unchanged (including non-2xx)
 
 Required unavailable-runtime behavior:

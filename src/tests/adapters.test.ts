@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "bun:test";
 
+import { type ResolvedUniversalClientEntry } from "../adapters/client-entry.js";
 import {
   createUniversalAngularCliProxyConfig,
   withUniversalAngularCliProxyConfig,
@@ -9,9 +10,19 @@ import { withUniversalNext } from "../adapters/framework/next.js";
 import { createUniversalNuxtModule } from "../adapters/framework/nuxt.js";
 import { UNIVERSAL_NEXT_BRIDGE_GLOBAL_KEY } from "../adapters/shared/adapter-utils.js";
 import { createUniversalVitePlugin } from "../adapters/shared/plugin.js";
+import { createClientRuntimeContext } from "../client/runtime-context.js";
 import { createMiddlewareAdapterServerFixture } from "./utils/adapter-server-fixtures.js";
 
 const originalNodeEnv = process.env.NODE_ENV;
+const clientEntries: ResolvedUniversalClientEntry[] = [
+  {
+    module: "@tests/client-entry",
+    context: createClientRuntimeContext({
+      namespaceId: "tests-client-entry",
+      bridgePathPrefix: "/__universal/tests-client-entry",
+    }),
+  },
+];
 
 async function clearBridgeGlobals(): Promise<void> {
   const bridgeGlobal = globalThis as typeof globalThis & {
@@ -22,8 +33,7 @@ async function clearBridgeGlobals(): Promise<void> {
   for (const key of Object.keys(bridgeGlobal)) {
     if (key.startsWith(UNIVERSAL_NEXT_BRIDGE_GLOBAL_KEY)) {
       const bridgePromise = bridgeGlobal[key] as
-        | Promise<{ close?: () => Promise<void> }>
-        | undefined;
+        Promise<{ close?: () => Promise<void> }> | undefined;
       if (bridgePromise) {
         cleanupTasks.push(
           (async () => {
@@ -105,6 +115,45 @@ describe("universal-bridge adapters", () => {
     expect(wrapped).toBe(config);
   });
 
+  it("withUniversalNext injects development client entries through Turbopack", () => {
+    process.env.NODE_ENV = "development";
+    const config = withUniversalNext({}, {}, clientEntries) as {
+      turbopack?: {
+        rules?: Record<
+          string,
+          | { loaders?: Array<{ options?: { bootstrap?: string } }> }
+          | Array<{ loaders?: Array<{ options?: { bootstrap?: string } }> }>
+        >;
+      };
+    };
+    const rule = config.turbopack?.rules?.["*"];
+    const clientEntryRule = Array.isArray(rule) ? rule.at(-1) : rule;
+    const loader = clientEntryRule?.loaders?.[0];
+
+    expect(loader?.options?.bootstrap).toContain("@tests/client-entry");
+    expect(loader?.options?.bootstrap).toContain(
+      "/__universal/tests-client-entry",
+    );
+    expect(loader?.options?.bootstrap).not.toContain(
+      "universal-bridge/client-runtime",
+    );
+  });
+
+  it("withUniversalNext preserves existing Turbopack rules", () => {
+    process.env.NODE_ENV = "development";
+    const existingRule = { loaders: ["existing-loader"], as: "*.js" };
+    const config = withUniversalNext(
+      { turbopack: { rules: { "*.tsx": existingRule } } },
+      {},
+      clientEntries,
+    ) as {
+      turbopack?: { rules?: Record<string, unknown> };
+    };
+
+    expect(config.turbopack?.rules?.["*.tsx"]).toBe(existingRule);
+    expect(config.turbopack?.rules?.["*"]).toBeDefined();
+  });
+
   it("withUniversalNext creates isolated bridge instances by default", async () => {
     process.env.NODE_ENV = "development";
     const passthroughRule = { source: "/noop/:path*", destination: "/noop" };
@@ -168,6 +217,35 @@ describe("universal-bridge adapters", () => {
       },
     );
     expect(prodHooks["vite:extendConfig"]).toBeUndefined();
+  });
+
+  it("createUniversalNuxtModule registers a client entry plugin", () => {
+    const module = createUniversalNuxtModule({}, clientEntries);
+    const hooks: Record<string, (...args: unknown[]) => void> = {};
+    const options: { dev: boolean; plugins?: Array<string | { src: string }> } =
+      {
+        dev: true,
+      };
+    module(
+      {},
+      {
+        options,
+        hook: (name: string, listener: (...args: unknown[]) => void) => {
+          hooks[name] = listener;
+        },
+      },
+    );
+
+    expect(options.plugins?.[0]).toMatchObject({
+      src: expect.stringContaining("nuxt-plugin.js"),
+    });
+    const config: { plugins?: Array<{ name?: string }> } = {};
+    hooks["vite:extendConfig"]?.(config);
+    expect(
+      config.plugins?.some(
+        (plugin) => plugin.name === "universal-bridge:client-entry",
+      ),
+    ).toBe(true);
   });
 
   it("createUniversalAstroIntegration wires setup and teardown hooks", async () => {

@@ -1,4 +1,8 @@
 import {
+  type ViteClientEntryPlugin,
+  createUniversalClientEntryVitePlugin,
+} from "./adapters/client-entry.js";
+import {
   type RsbuildConfig,
   type RsbuildUniversalOptions,
   withUniversalRsbuild,
@@ -67,12 +71,15 @@ import {
   type UniversalPresetOptions,
   type UniversalPresetRegistration,
   registerUniversalPreset,
+  resolveFrameworkClientEntries,
   resolveFrameworkComposition,
 } from "./preset-registry.js";
 
 export type {
+  UniversalClientEntry,
   UniversalCompositionMode,
   UniversalPresetIdentity,
+  UniversalPresetClientOptions,
   UniversalPresetOptions,
 } from "./preset-registry.js";
 
@@ -81,7 +88,7 @@ export interface UniversalPreset {
     options?: UniversalVitePluginOptions,
   ) =>
     | ReturnType<typeof createUniversalVitePlugin>
-    | ReturnType<typeof createUniversalVitePlugin>[];
+    | (ReturnType<typeof createUniversalVitePlugin> | ViteClientEntryPlugin)[];
   next: <T extends object>(nextConfig: T, options?: UniversalNextOptions) => T;
   nuxt: (
     options?: UniversalNuxtOptions,
@@ -152,13 +159,7 @@ export interface UniversalPreset {
 }
 
 type FrameworkAdapterKind =
-  | "vite"
-  | "next"
-  | "nuxt"
-  | "astro"
-  | "webpack"
-  | "rsbuild"
-  | "rspack";
+  "vite" | "next" | "nuxt" | "astro" | "webpack" | "rsbuild" | "rspack";
 
 type FrameworkActivationStore = {
   counters: Map<FrameworkAdapterKind, number>;
@@ -419,7 +420,7 @@ export function createUniversalPreset(
         registration.composition,
       );
       const entries = getFrameworkRegistrations(options);
-      const plugins = entries.map((entry) =>
+      const bridgePlugins = entries.map((entry) =>
         guardVitePlugin(
           "vite",
           createUniversalVitePlugin(
@@ -432,7 +433,13 @@ export function createUniversalPreset(
           activation?.token,
         ),
       );
-      return plugins.length === 1 ? plugins[0] : plugins;
+      const clientEntryPlugin = createUniversalClientEntryVitePlugin(
+        resolveFrameworkClientEntries(entries),
+      );
+      if (!clientEntryPlugin) {
+        return bridgePlugins.length === 1 ? bridgePlugins[0] : bridgePlugins;
+      }
+      return [...bridgePlugins, clientEntryPlugin];
     },
     next<T extends object>(
       nextConfig: T,
@@ -443,14 +450,16 @@ export function createUniversalPreset(
         registration.composition,
       );
       const entries = getFrameworkRegistrations(options);
+      const clientEntries = resolveFrameworkClientEntries(entries);
       return entries.reduce<T>(
-        (config, entry) =>
+        (config, entry, index) =>
           withUniversalNext(
             config,
             withFrameworkActivation(
               entry.effectiveOptions,
               activation?.isActive,
             ),
+            index === 0 ? clientEntries : [],
           ),
         nextConfig,
       );
@@ -461,9 +470,11 @@ export function createUniversalPreset(
         registration.composition,
       );
       const entries = getFrameworkRegistrations(options);
-      const modules = entries.map((entry) =>
+      const clientEntries = resolveFrameworkClientEntries(entries);
+      const modules = entries.map((entry, index) =>
         createUniversalNuxtModule(
           withFrameworkActivation(entry.effectiveOptions, activation?.isActive),
+          index === 0 ? clientEntries : [],
         ),
       );
       return guardNuxtModule(composeNuxtModules(modules), activation?.isActive);
@@ -474,9 +485,11 @@ export function createUniversalPreset(
         registration.composition,
       );
       const entries = getFrameworkRegistrations(options);
-      const integrations = entries.map((entry) =>
+      const clientEntries = resolveFrameworkClientEntries(entries);
+      const integrations = entries.map((entry, index) =>
         createUniversalAstroIntegration(
           withFrameworkActivation(entry.effectiveOptions, activation?.isActive),
+          index === 0 ? clientEntries : [],
         ),
       );
       return guardAstroIntegration(

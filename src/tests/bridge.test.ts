@@ -135,7 +135,7 @@ describe("UniversalBridge", () => {
       transportState: string;
     }>(server.baseUrl, "/__universal/state");
 
-    expect(stateBeforeStop.protocolVersion).toBe("1");
+    expect(stateBeforeStop.protocolVersion).toBe("2");
     expect(stateBeforeStop.runtime.phase).toBe("error");
     expect(stateBeforeStop.transportState).toBe("degraded");
     expect(typeof stateBeforeStop.runtime.lastError).toBe("string");
@@ -176,7 +176,7 @@ describe("UniversalBridge", () => {
       protocolVersion: string;
       runtime: { phase: string };
     }>(server.baseUrl, "/__universal/state?source=test");
-    expect(state.protocolVersion).toBe("1");
+    expect(state.protocolVersion).toBe("2");
     expect(state.runtime.phase).toBe("stopped");
   });
 

@@ -1,0 +1,19 @@
+{
+  "name": "example-astro",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@example/universal-overlay": "workspace:*",
+    "@example/shared": "workspace:*",
+    "astro": "^7.0.6"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}

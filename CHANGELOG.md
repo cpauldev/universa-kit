@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-07-12
+
+### Breaking
+
+- Upgraded the bridge protocol from v1 to v2. WebSocket clients that send `Sec-WebSocket-Protocol` must offer `universal.v2+json`; v1 is rejected.
+- Replaced `runtime-status` and `runtime-error` WebSocket events with `bridge-state` (a complete `UniversalBridgeState` snapshot) and `bridge-error`.
+- Added the required monotonic `revision` field to `UniversalBridgeState` for ordered state reconciliation.
+- Limited `/events` to typed bridge events; runtime WebSocket traffic must use a separate channel. Removed the obsolete `proxyRuntimeWebSocket` option.
+
+### Added
+
+- `createBridgeRuntimeStore` for shared browser runtime state, lifecycle actions, event ordering, and refresh.
+- Preset `client.entries` support for auto-loaded development browser modules, with derived runtime context and cross-namespace duplicate protection.
+- Development client-entry injection for Vite (including SvelteKit and Vinext), Next.js/Turbopack, Nuxt, and Astro.
+- Browser-specific package exports, including the root-package browser condition, to keep server-only dependencies out of browser bundles.
+- `onOpen` and `onClose` lifecycle callbacks for client event subscriptions.
+- A consolidated example dashboard with Runtime, Files, and Settings views backed by a shared dashboard controller.
+
+### Changed
+
+- Reorganized framework hosts and the reference overlay under `example/`; the overlay now registers and auto-mounts itself through `universalOverlay()` configuration.
+- Refreshed example dashboard, file explorer, settings, and bridge-status presentation across framework examples.
+
+### Fixed
+
+- Kept the selected file-tree row visually stable on hover and aligned bridge status badges across the examples.
+- Prevented duplicate Next browser-warning forwarding to the development terminal.
+- Prevented intentional runtime stops from being reported as runtime failures, and preserved binary Bun WebSocket payloads safely.
+
 ## [0.3.0] - 2026-07-12
 
 ### Changed
@@ -88,6 +117,7 @@ Initial release of `universa-kit`, a universal bridge for in-browser development
 - Eight framework examples (Next.js, Nuxt, Astro, SvelteKit, React, Vue, Solid, Vanilla) with shared UI components and example runner scripts.
 - Development overlay with React UI, Tailwind CSS, dashboard panels, file explorer, and metadata display.
 
+[0.4.0]: https://github.com/cpauldev/universal-bridge/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/cpauldev/universal-bridge/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/cpauldev/universal-bridge/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/cpauldev/universal-bridge/compare/v0.1.2...v0.2.0

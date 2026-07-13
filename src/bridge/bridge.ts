@@ -85,8 +85,8 @@ export class UniversalBridge {
     this.#autoStartEnabled = this.#options.autoStart;
     this.#eventBus = new BridgeEventBus(this.#options.eventHeartbeatIntervalMs);
     this.#eventBus.attachToWebSocketServer(this.#wss);
-    this.#helper.onStatusChange((status) =>
-      this.#eventBus.emitRuntimeStatus(status),
+    this.#helper.onStatusChange(() =>
+      this.#eventBus.emitBridgeState(this.getState()),
     );
   }
 
@@ -98,6 +98,7 @@ export class UniversalBridge {
     const runtime = this.#helper.getStatus();
     return {
       protocolVersion: UNIVERSAL_PROTOCOL_VERSION,
+      revision: this.#eventBus.getRevision(),
       transportState: toTransportState(runtime),
       runtime,
       capabilities: this.#capabilities,
@@ -144,10 +145,8 @@ export class UniversalBridge {
       wss: this.#wss,
       eventBus: this.#eventBus,
       shouldAutoStartRuntime: () => this.shouldAutoStartRuntime(),
-      shouldProxyRuntimeWebSocket: () => this.#options.proxyRuntimeWebSocket,
       ensureRuntimeStarted: () => this.#helper.ensureStarted(),
-      getRuntimeUrl: () => this.#helper.getRuntimeUrl(),
-      getRuntimeStatus: () => this.#helper.getStatus(),
+      getState: () => this.getState(),
     });
   }
 
@@ -258,7 +257,7 @@ export class UniversalBridge {
         this.#autoStartEnabled = false;
       },
       emitRuntimeError: (error: string) =>
-        this.#eventBus.emitRuntimeError(error),
+        this.#eventBus.emitBridgeError(error),
       writeBridgeError,
     };
   }

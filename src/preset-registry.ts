@@ -1,4 +1,11 @@
 import type { UniversalAdapterOptions } from "./adapters/shared/adapter-utils.js";
+import {
+  type ResolvedUniversalClientEntry,
+  type UniversalClientEntry,
+} from "./adapters/client-entry.js";
+import { createClientRuntimeContext } from "./client/runtime-context.js";
+
+export type { UniversalClientEntry } from "./adapters/client-entry.js";
 
 export type UniversalPresetIdentity = {
   packageName: string;
@@ -6,6 +13,10 @@ export type UniversalPresetIdentity = {
 };
 
 export type UniversalCompositionMode = "registry" | "local";
+
+export type UniversalPresetClientOptions = {
+  entries: readonly UniversalClientEntry[];
+};
 
 type UnsafeOverrides = Partial<{
   adapterName: string;
@@ -19,6 +30,7 @@ type BasePresetAdapterOptions = Omit<
 
 export type UniversalPresetOptions = BasePresetAdapterOptions & {
   identity: UniversalPresetIdentity;
+  client?: UniversalPresetClientOptions;
   composition?: UniversalCompositionMode;
   instanceId?: string;
   unsafeOverrides?: UnsafeOverrides;
@@ -38,6 +50,7 @@ export interface UniversalPresetRegistration {
   identity: UniversalPresetIdentity;
   composition: UniversalCompositionMode;
   namespace: UniversalNamespaceMetadata;
+  clientEntries: ResolvedUniversalClientEntry[];
   effectiveOptions: UniversalAdapterOptions;
 }
 
@@ -166,6 +179,7 @@ function buildEffectiveOptions(
 ): UniversalAdapterOptions {
   const {
     identity: _identity,
+    client: _client,
     composition: _composition,
     instanceId: _instanceId,
     unsafeOverrides,
@@ -189,6 +203,32 @@ function buildEffectiveOptions(
       label: canonicalIdentity,
     },
   };
+}
+
+function resolveClientEntries(
+  options: UniversalPresetOptions,
+  namespace: UniversalNamespaceMetadata,
+): ResolvedUniversalClientEntry[] {
+  const seen = new Set<string>();
+  const entries: ResolvedUniversalClientEntry[] = [];
+
+  for (const entry of options.client?.entries ?? []) {
+    const module = entry.module.trim();
+    if (!module) {
+      throw new Error("Universal client entries require a non-empty module.");
+    }
+    if (seen.has(module)) continue;
+    seen.add(module);
+    entries.push({
+      module,
+      context: createClientRuntimeContext({
+        namespaceId: namespace.namespaceId,
+        bridgePathPrefix: `${BRIDGE_PATH_PREFIX}/${namespace.namespaceId}`,
+      }),
+    });
+  }
+
+  return entries;
 }
 
 export function registerUniversalPreset(
@@ -230,6 +270,7 @@ export function registerUniversalPreset(
     namespaceId,
     identity.canonicalIdentity,
   );
+  const clientEntries = resolveClientEntries(options, namespace);
 
   const registration: UniversalPresetRegistration = {
     id: registrationId,
@@ -241,6 +282,7 @@ export function registerUniversalPreset(
     },
     composition,
     namespace,
+    clientEntries,
     effectiveOptions,
   };
 
@@ -284,4 +326,33 @@ export function resolveFrameworkComposition(
     (entry) => entry.composition === "registry",
   );
   return dedupeByNamespace(registryEntries);
+}
+
+export function resolveFrameworkClientEntries(
+  entries: UniversalPresetRegistration[],
+): ResolvedUniversalClientEntry[] {
+  const byModule = new Map<string, ResolvedUniversalClientEntry>();
+  const clientEntries: ResolvedUniversalClientEntry[] = [];
+
+  for (const entry of entries) {
+    for (const clientEntry of entry.clientEntries) {
+      const existing = byModule.get(clientEntry.module);
+      if (existing) {
+        if (
+          existing.context.namespaceId !== clientEntry.context.namespaceId ||
+          existing.context.bridgePathPrefix !==
+            clientEntry.context.bridgePathPrefix
+        ) {
+          throw new Error(
+            `Universal client entry ${JSON.stringify(clientEntry.module)} is registered for multiple namespaces (${JSON.stringify(existing.context.namespaceId)} and ${JSON.stringify(clientEntry.context.namespaceId)}). Use distinct client modules for distinct preset instances.`,
+          );
+        }
+        continue;
+      }
+      byModule.set(clientEntry.module, clientEntry);
+      clientEntries.push(clientEntry);
+    }
+  }
+
+  return clientEntries;
 }

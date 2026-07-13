@@ -1,4 +1,4 @@
-![Universal Bridge banner](banner.webp)
+![Universal Bridge banner](assets/banner.webp)
 
 # Universal Bridge: A Protocol for Local Services
 
@@ -15,6 +15,8 @@ Universal Bridge mounts that shared layer at `/__universal/*`, providing HTTP he
 Use Universal Bridge when you're building a developer tool—such as an overlay, panel, CLI companion, or local service—that needs to work across frameworks and server runtimes.
 
 If you're using a tool that already includes Universal Bridge integration, configure that tool instead; you usually do not need to install Universal Bridge directly.
+
+![Universal Bridge reference dashboard](assets/universal-overlay-dashboard.webp)
 
 ## Table of Contents
 
@@ -92,7 +94,7 @@ export default defineConfig({
 
 - **Bridge path prefix**: defaults to `/__universal`.
 - **Runtime helper**: optional process manager for your tool runtime command.
-- **Protocol version**: current bridge protocol is `1`.
+- **Protocol version**: current bridge protocol is `2` (`universal.v2+json` for negotiated event sockets).
 - **Preset API**: recommended integration API for tool authors so users configure one entry point (`mytool().vite()`, `mytool().next(...)`, etc.).
 
 ## Integration surfaces
@@ -120,9 +122,12 @@ export default defineConfig({
 | ------------------------------------------- | --------------------------------- |
 | `createUniversalPreset`                     | `universal-bridge/preset`         |
 | `createUniversalClient`                     | `universal-bridge/client`         |
+| `createBridgeRuntimeStore`                  | `universal-bridge/client`         |
 | `createClientRuntimeContext`                | `universal-bridge/client-runtime` |
 | `startStandaloneUniversalBridgeServer`      | `universal-bridge`                |
 | `createUniversalBridge` / `UniversalBridge` | `universal-bridge`                |
+
+The root package resolves to a browser-only client surface in browser builds. Import server APIs from `universal-bridge` in server code, and import browser APIs explicitly from `universal-bridge/client` when that makes the boundary clearer.
 
 ### Adapter naming conventions
 
@@ -151,7 +156,6 @@ Most adapter APIs accept shared bridge/runtime options.
 | `runtimePortEnvVar`        | `string`                              | `"UNIVERSAL_RUNTIME_PORT"` | Env var populated with selected runtime port.                                                     |
 | `fallbackCommand`          | `string`                              | `"universal dev"`          | Returned in some runtime-control error payloads.                                                  |
 | `eventHeartbeatIntervalMs` | `number`                              | `30000`                    | WS heartbeat for stale client cleanup.                                                            |
-| `proxyRuntimeWebSocket`    | `boolean`                             | `true`                     | Enables runtime websocket proxying through bridge events socket.                                  |
 | `instance`                 | `{ id: string; label?: string }`      | none                       | Optional instance metadata in bridge state/health.                                                |
 | `additionalRewriteSources` | `string[]`                            | `[]`                       | Extra path prefixes proxied directly to the runtime (e.g. `["/dashboard/:path*"]`). Next.js only. |
 
@@ -161,6 +165,8 @@ Most adapter APIs accept shared bridge/runtime options.
 - `composition`: `"registry" | "local"`
 - `instanceId`: stable suffix for multiple preset instances
 - `unsafeOverrides`: advanced adapter identity overrides
+- `client.entries`: self-initializing browser modules loaded in development by
+  the Vite, Next.js, Nuxt, and Astro preset adapters
 
 ## Protocol summary
 
@@ -197,12 +203,20 @@ import { createUniversalPreset } from "universal-bridge/preset";
 export function myTool() {
   return createUniversalPreset({
     identity: { packageName: "mytool" },
+    client: {
+      entries: [{ module: "mytool/overlay" }],
+    },
     command: "mytool",
     args: ["dev"],
     fallbackCommand: "mytool dev",
   });
 }
 ```
+
+Entries load once per page in development. Each can read its derived namespace
+and bridge prefix with `resolveClientRuntimeContext("mytool/overlay")`, then
+mount its own UI. See the integration guide for a complete example and
+multiple-instance constraints.
 
 ### Next.js
 
@@ -234,7 +248,11 @@ const client = createUniversalClient({ namespaceId: "mytool" });
 const state = await client.getState();
 
 const unsubscribe = client.subscribeEvents((event) => {
-  console.log(event.type, event.eventId);
+  if (event.type === "bridge-state") {
+    console.log(event.state.runtime.phase, event.state.revision);
+  } else {
+    console.error(event.error);
+  }
 });
 
 unsubscribe();
@@ -269,7 +287,7 @@ For implementation details, see `ARCHITECTURE.md`.
 - [`INTEGRATION_GUIDE.md`](INTEGRATION_GUIDE.md): end-to-end guide for tool authors, adapter cookbook, and expanded API coverage.
 - [`PROTOCOL.md`](PROTOCOL.md): normative bridge contract.
 - [`ARCHITECTURE.md`](ARCHITECTURE.md): internal architecture.
-- [`EXAMPLES.md`](EXAMPLES.md): workspace example setup and verification.
+- [`EXAMPLE.md`](EXAMPLE.md): Universal Overlay setup and verification.
 
 Docs checks:
 

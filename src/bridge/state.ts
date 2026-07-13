@@ -41,13 +41,3 @@ export function toTransportState(
       return "bridge_detecting";
   }
 }
-
-export function toRuntimeWebSocketUrl(runtimeUrl: string): string {
-  if (runtimeUrl.startsWith("https://")) {
-    return `wss://${runtimeUrl.slice("https://".length)}`;
-  }
-  if (runtimeUrl.startsWith("http://")) {
-    return `ws://${runtimeUrl.slice("http://".length)}`;
-  }
-  return `ws://${runtimeUrl}`;
-}

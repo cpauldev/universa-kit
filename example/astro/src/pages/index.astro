@@ -1,0 +1,32 @@
+---
+import "@example/shared/layout.css";
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Universal Bridge — Astro</title>
+  </head>
+  <body>
+    <div id="example-root"></div>
+
+    <script>
+      import { mountExampleDashboard } from "@example/shared/dashboard-client";
+
+      const root = document.getElementById("example-root");
+      if (!root) {
+        throw new Error("Missing #example-root");
+      }
+
+      const cleanup = mountExampleDashboard({
+        root,
+        frameworkId: "astro",
+      });
+
+      window.addEventListener("unload", cleanup);
+    </script>
+  </body>
+</html>

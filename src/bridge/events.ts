@@ -1,6 +1,6 @@
 import { WebSocket, WebSocketServer } from "ws";
 
-import type { UniversalBridgeEvent, UniversalRuntimeStatus } from "../types.js";
+import type { UniversalBridgeEvent, UniversalBridgeState } from "../types.js";
 import { UNIVERSAL_PROTOCOL_VERSION } from "./constants.js";
 
 interface EventClientState {
@@ -12,6 +12,7 @@ export class BridgeEventBus {
   #eventClientState = new Map<WebSocket, EventClientState>();
   #heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   #nextEventId = 1;
+  #revision = 0;
 
   constructor(heartbeatIntervalMs: number) {
     this.startHeartbeatLoop(heartbeatIntervalMs);
@@ -21,23 +22,29 @@ export class BridgeEventBus {
     wss.on("connection", (socket) => this.registerEventClient(socket));
   }
 
-  createRuntimeStatusEvent(
-    status: UniversalRuntimeStatus,
-  ): UniversalBridgeEvent {
+  createBridgeStateEvent(state: UniversalBridgeState): UniversalBridgeEvent {
     return this.createBridgeEvent({
-      type: "runtime-status",
-      status,
+      type: "bridge-state",
+      state,
     });
   }
 
-  emitRuntimeStatus(status: UniversalRuntimeStatus): void {
-    this.emitEvent(this.createRuntimeStatusEvent(status));
+  emitBridgeState(state: UniversalBridgeState): void {
+    this.#revision += 1;
+    this.emitEvent(this.createBridgeStateEvent({
+      ...state,
+      revision: this.#revision,
+    }));
   }
 
-  emitRuntimeError(error: string): void {
+  getRevision(): number {
+    return this.#revision;
+  }
+
+  emitBridgeError(error: string): void {
     this.emitEvent(
       this.createBridgeEvent({
-        type: "runtime-error",
+        type: "bridge-error",
         error,
       }),
     );
@@ -64,11 +71,11 @@ export class BridgeEventBus {
   private createBridgeEvent(
     event:
       | {
-          type: "runtime-status";
-          status: UniversalRuntimeStatus;
+          type: "bridge-state";
+          state: UniversalBridgeState;
         }
       | {
-          type: "runtime-error";
+          type: "bridge-error";
           error: string;
         },
   ): UniversalBridgeEvent {

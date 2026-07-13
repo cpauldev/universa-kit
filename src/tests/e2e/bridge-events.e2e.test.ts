@@ -9,25 +9,23 @@ import {
   startStandaloneUniversalBridgeServer,
 } from "../../bridge/standalone.js";
 
-interface RuntimeStatusEvent {
-  type: "runtime-status";
+interface BridgeStateEvent {
+  type: "bridge-state";
   protocolVersion: string;
   eventId: number;
   timestamp: number;
-  status: {
-    phase: string;
-  };
+  state: { revision: number; runtime: { phase: string } };
 }
 
-interface RuntimeErrorEvent {
-  type: "runtime-error";
+interface BridgeErrorEvent {
+  type: "bridge-error";
   protocolVersion: string;
   eventId: number;
   timestamp: number;
   error: string;
 }
 
-type BridgeEvent = RuntimeStatusEvent | RuntimeErrorEvent;
+type BridgeEvent = BridgeStateEvent | BridgeErrorEvent;
 
 const fixtureRuntimeScript = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -68,8 +66,8 @@ function toWebSocketUrl(baseUrl: string): string {
 async function waitForRuntimePhase(
   socket: WebSocket,
   expectedPhase: string,
-): Promise<RuntimeStatusEvent> {
-  return await new Promise<RuntimeStatusEvent>((resolve, reject) => {
+): Promise<BridgeStateEvent> {
+  return await new Promise<BridgeStateEvent>((resolve, reject) => {
     const timeout = setTimeout(
       () => reject(new Error(`Timed out waiting for phase: ${expectedPhase}`)),
       10000,
@@ -79,8 +77,8 @@ async function waitForRuntimePhase(
       try {
         const event = JSON.parse(payload.toString()) as BridgeEvent;
         if (
-          event.type === "runtime-status" &&
-          event.status.phase === expectedPhase
+          event.type === "bridge-state" &&
+          event.state.runtime.phase === expectedPhase
         ) {
           clearTimeout(timeout);
           socket.off("message", onMessage);
@@ -96,7 +94,7 @@ async function waitForRuntimePhase(
 }
 
 describe("bridge events e2e", () => {
-  it("emits runtime-status events for start and stop", async () => {
+  it("emits bridge-state snapshots for start and stop", async () => {
     const server = await startStandaloneUniversalBridgeServer({
       autoStart: false,
       command: process.execPath,
@@ -124,7 +122,7 @@ describe("bridge events e2e", () => {
       body: "{}",
     });
     const runningPhase = await runningPhasePromise;
-    expect(runningPhase.protocolVersion).toBe("1");
+    expect(runningPhase.protocolVersion).toBe("2");
 
     const stoppedPhasePromise = waitForRuntimePhase(socket, "stopped");
     await fetch(`${server.baseUrl}/__universal/runtime/stop`, {
@@ -133,8 +131,11 @@ describe("bridge events e2e", () => {
       body: "{}",
     });
     const stoppedPhase = await stoppedPhasePromise;
-    expect(stoppedPhase.protocolVersion).toBe("1");
+    expect(stoppedPhase.protocolVersion).toBe("2");
     expect(stoppedPhase.eventId).toBeGreaterThan(runningPhase.eventId);
+    expect(stoppedPhase.state.revision).toBeGreaterThan(
+      runningPhase.state.revision,
+    );
   });
 
   it("accepts websocket when supported subprotocol is present in offered list", async () => {

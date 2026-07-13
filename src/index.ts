@@ -1,4 +1,9 @@
 export {
+  createBridgeRuntimeStore,
+  type BridgeRuntimeSnapshot,
+  type BridgeRuntimeStore,
+} from "./client/runtime-store.js";
+export {
   createUniversalBridge,
   UniversalBridge,
   type UniversalBridgeOptions,
@@ -114,6 +119,10 @@ export {
   resolveClientRuntimeContext,
   type UniversalClientRuntimeContext,
 } from "./client/runtime-context.js";
+export type {
+  UniversalClientEntry,
+  UniversalPresetClientOptions,
+} from "./preset-registry.js";
 export type {
   UniversalBridgeCapabilities,
   UniversalBridgeEvent,

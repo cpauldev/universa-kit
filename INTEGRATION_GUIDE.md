@@ -58,6 +58,9 @@ import { createUniversalPreset } from "universal-bridge/preset";
 export function acmetool() {
   return createUniversalPreset({
     identity: { packageName: "acmetool" },
+    client: {
+      entries: [{ module: "acmetool/overlay" }],
+    },
     command: "acmetool",
     args: ["dev"],
     fallbackCommand: "acmetool dev",
@@ -105,7 +108,34 @@ Preset integrations are namespaced:
 - `WS /__universal/acmetool/events`
 - `ANY /__universal/acmetool/api/*`
 
-## 5) Optional browser overlay client
+## 5) Optional browser client entry
+
+Client entries are self-initializing browser modules. In development, preset
+adapters for Vite (including SvelteKit and Vinext), Next.js, Nuxt, and Astro
+load them automatically. Use them for overlays, panels, inspectors, and other
+developer-facing browser features.
+
+```ts
+client: {
+  entries: [{ module: "acmetool/overlay" }],
+}
+```
+
+The entry can read its derived namespace and bridge path, then mount its UI:
+
+```ts
+// acmetool/overlay
+import { resolveClientRuntimeContext } from "universal-bridge/client-runtime";
+
+const context = resolveClientRuntimeContext("acmetool/overlay");
+mountOverlay({ bridgePathPrefix: context?.bridgePathPrefix });
+```
+
+The entry owns its UI and mounting behavior.
+
+Each client module is initialized once per page, so a module may only be registered for one preset namespace. Use distinct module specifiers when multiple preset instances need separate browser clients.
+
+### Manual client access
 
 ```ts
 import { createUniversalClient } from "universal-bridge/client";
@@ -115,12 +145,31 @@ const state = await client.getState();
 console.log(state.runtime.phase);
 
 const unsubscribe = client.subscribeEvents((event) => {
-  if (event.type === "runtime-status") {
-    console.log(event.status.phase);
+  if (event.type === "bridge-state") {
+    console.log(event.state.runtime.phase);
+  } else {
+    console.error(event.error);
   }
 });
 
 window.addEventListener("beforeunload", () => unsubscribe());
+```
+
+For a UI that needs shared state, reconnection, ordered events, and runtime
+actions, use `createBridgeRuntimeStore`:
+
+```ts
+import { createBridgeRuntimeStore } from "universal-bridge/client";
+
+const runtimeStore = createBridgeRuntimeStore({ namespaceId: "acmetool" });
+const unsubscribe = runtimeStore.subscribe(() => {
+  const { bridgeState, connection, error } = runtimeStore.getSnapshot();
+  console.log(connection, bridgeState?.runtime.phase, error);
+});
+
+await runtimeStore.restart();
+unsubscribe();
+runtimeStore.destroy();
 ```
 
 ## 6) Important notes
@@ -152,6 +201,7 @@ window.addEventListener("beforeunload", () => unsubscribe());
 | API                                                              | Import path                       | Purpose                                                    |
 | ---------------------------------------------------------------- | --------------------------------- | ---------------------------------------------------------- |
 | `createUniversalClient` / `UniversalClientError`                 | `universal-bridge/client`         | Typed health/state/runtime/event client.                   |
+| `createBridgeRuntimeStore`                                        | `universal-bridge/client`         | Shared browser runtime state, lifecycle actions, and event reconciliation. |
 | `createClientRuntimeContext`                                     | `universal-bridge/client-runtime` | Create normalized namespace runtime context.               |
 | `registerClientRuntimeContext` / `registerClientRuntimeContexts` | `universal-bridge/client-runtime` | Register module-to-context mappings.                       |
 | `getClientRuntimeContexts` / `resolveClientRuntimeContext`       | `universal-bridge/client-runtime` | Read/resolve runtime contexts.                             |

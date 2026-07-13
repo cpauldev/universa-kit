@@ -101,7 +101,7 @@ describe("plugin integration", () => {
     };
     expect(payload.ok).toBe(true);
     expect(payload.bridge).toBe(true);
-    expect(payload.protocolVersion).toBe("1");
-    expect(payload.capabilities.wsSubprotocol).toBe("universal.v1+json");
+    expect(payload.protocolVersion).toBe("2");
+    expect(payload.capabilities.wsSubprotocol).toBe("universal.v2+json");
   });
 });

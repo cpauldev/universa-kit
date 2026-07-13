@@ -1,23 +1,20 @@
 import type { IncomingMessage } from "http";
 import type { Duplex } from "stream";
-import { WebSocket, WebSocketServer } from "ws";
+import { WebSocketServer } from "ws";
 
-import type { UniversalRuntimeStatus } from "../types.js";
+import type { UniversalBridgeState } from "../types.js";
 import { UNIVERSAL_WS_SUBPROTOCOL } from "./constants.js";
 import { rejectUpgrade } from "./errors.js";
 import type { BridgeEventBus } from "./events.js";
 import { getRequestedSubprotocols, isEventsUpgradePath } from "./router.js";
-import { toRuntimeWebSocketUrl } from "./state.js";
 
 interface BridgeUpgradeContext {
   bridgePathPrefix: string;
   wss: WebSocketServer;
   eventBus: BridgeEventBus;
   shouldAutoStartRuntime: () => boolean;
-  shouldProxyRuntimeWebSocket: () => boolean;
   ensureRuntimeStarted: () => Promise<unknown>;
-  getRuntimeUrl: () => string | null;
-  getRuntimeStatus: () => UniversalRuntimeStatus;
+  getState: () => UniversalBridgeState;
 }
 
 export function handleBridgeUpgrade(
@@ -49,11 +46,11 @@ export function handleBridgeUpgrade(
     context.wss.emit("connection", ws, req);
     ws.send(
       JSON.stringify(
-        context.eventBus.createRuntimeStatusEvent(context.getRuntimeStatus()),
+        context.eventBus.createBridgeStateEvent(context.getState()),
       ),
     );
     pipeRuntimeEvents(ws, context).catch((error) => {
-      context.eventBus.emitRuntimeError(
+      context.eventBus.emitBridgeError(
         error instanceof Error ? error.message : String(error),
       );
     });
@@ -61,53 +58,18 @@ export function handleBridgeUpgrade(
 }
 
 async function pipeRuntimeEvents(
-  client: WebSocket,
+  _client: import("ws").WebSocket,
   context: BridgeUpgradeContext,
 ): Promise<void> {
   if (context.shouldAutoStartRuntime()) {
     try {
       await context.ensureRuntimeStarted();
     } catch (error) {
-      context.eventBus.emitRuntimeError(
+      context.eventBus.emitBridgeError(
         error instanceof Error ? error.message : String(error),
       );
       return;
     }
   }
 
-  if (!context.shouldProxyRuntimeWebSocket()) {
-    return;
-  }
-
-  const runtimeUrl = context.getRuntimeUrl();
-  if (!runtimeUrl || client.readyState !== WebSocket.OPEN) {
-    return;
-  }
-
-  const upstream = new WebSocket(toRuntimeWebSocketUrl(runtimeUrl));
-  upstream.on("message", (data, isBinary) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(data, { binary: isBinary });
-    }
-  });
-  upstream.on("error", (error) => {
-    context.eventBus.emitRuntimeError(error.message);
-  });
-  // Keep the bridge events socket open even if the runtime websocket closes.
-  // The /events channel is used for bridge runtime status updates and should
-  // remain available independently of runtime websocket proxy health.
-  upstream.on("close", () => {
-    context.eventBus.emitRuntimeError("Runtime websocket closed");
-  });
-
-  client.on("message", (data, isBinary) => {
-    if (upstream.readyState === WebSocket.OPEN) {
-      upstream.send(data, { binary: isBinary });
-    }
-  });
-  client.on("close", () => {
-    if (upstream.readyState === WebSocket.OPEN) {
-      upstream.close();
-    }
-  });
 }

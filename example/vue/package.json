@@ -1,0 +1,22 @@
+{
+  "name": "example-vue",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@example/universal-overlay": "workspace:*",
+    "@example/shared": "workspace:*",
+    "vue": "^3.5.39"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.7",
+    "typescript": "^6.0.3",
+    "vite": "^8.1.3",
+    "vue-tsc": "^3.3.6"
+  }
+}

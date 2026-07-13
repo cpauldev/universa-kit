@@ -5,6 +5,7 @@ import {
   type UniversalRewriteSpec,
 } from "../adapters/shared/adapter-utils.js";
 import { createUniversalPreset } from "../preset.js";
+import { getUniversalRegisteredPresets } from "../preset-registry.js";
 
 type StandaloneBridgeLike = {
   baseUrl: string;
@@ -36,8 +37,7 @@ async function clearSeededStandaloneBridges(): Promise<void> {
 
   for (const key of createdKeys) {
     const bridgePromise = bridgeGlobal[key] as
-      | Promise<StandaloneBridgeLike>
-      | undefined;
+      Promise<StandaloneBridgeLike> | undefined;
     if (bridgePromise) {
       cleanupTasks.push(
         (async () => {
@@ -168,5 +168,58 @@ describe("createUniversalPreset", () => {
       source: "/__universal/tests-per-call/:path*",
       destination: "http://127.0.0.1:40202/__universal/tests-per-call/:path*",
     });
+  });
+
+  it("composes client entries with derived runtime contexts", () => {
+    createUniversalPreset({
+      identity: { packageName: "@tests/client-one" },
+      client: {
+        entries: [
+          { module: "@tests/client-entry" },
+          { module: "@tests/client-entry" },
+        ],
+      },
+    });
+    const preset = createUniversalPreset({
+      identity: { packageName: "@tests/client-two" },
+      client: {
+        entries: [
+          { module: "@tests/other-client-entry" },
+        ],
+      },
+    });
+
+    const registrations = getUniversalRegisteredPresets();
+    expect(registrations[0]?.clientEntries).toHaveLength(1);
+    expect(registrations[0]?.clientEntries[0]?.context.bridgePathPrefix).toBe(
+      "/__universal/tests-client-one",
+    );
+
+    const plugins = preset.vite();
+    const clientPlugin = (Array.isArray(plugins) ? plugins : [plugins]).find(
+      (plugin) => plugin.name === "universal-bridge:client-entry",
+    ) as { load?: (id: string) => string | null } | undefined;
+    const bootstrap = clientPlugin?.load?.("\0universal-bridge:client-entry");
+
+    expect(bootstrap).toContain("@tests/client-entry");
+    expect(bootstrap).toContain("@tests/other-client-entry");
+    expect(bootstrap).toContain("/__universal/tests-client-one");
+    expect(bootstrap).toContain("/__universal/tests-client-two");
+    expect(bootstrap).not.toContain("universal-bridge/client-runtime");
+  });
+
+  it("rejects a client module registered for multiple namespaces", () => {
+    createUniversalPreset({
+      identity: { packageName: "@tests/client-one" },
+      client: { entries: [{ module: "@tests/client-entry" }] },
+    });
+    const preset = createUniversalPreset({
+      identity: { packageName: "@tests/client-two" },
+      client: { entries: [{ module: "@tests/client-entry" }] },
+    });
+
+    expect(() => preset.vite()).toThrow(
+      "registered for multiple namespaces",
+    );
   });
 });

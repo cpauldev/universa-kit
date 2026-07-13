@@ -13,7 +13,7 @@ export function createRouteKey(method: string, routePath: string): string {
   return `${method} ${routePath}`;
 }
 
-export function isBridgePath(
+function isBridgePath(
   pathname: string,
   bridgePathPrefix: string,
 ): boolean {

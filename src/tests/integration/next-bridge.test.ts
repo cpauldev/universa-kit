@@ -55,6 +55,6 @@ describe("next integration", () => {
     const response = await fetch(`${baseUrl}/__universal/health`);
     expect(response.ok).toBe(true);
     const payload = (await response.json()) as { protocolVersion: string };
-    expect(payload.protocolVersion).toBe("1");
+    expect(payload.protocolVersion).toBe("2");
   });
 });

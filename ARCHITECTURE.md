@@ -33,8 +33,8 @@ Core protocol implementation.
 - `router.ts`: pathname/query-safe route matching and route keys
 - `runtime-control.ts`: `/state`, `/runtime/status`, `/runtime/*` handlers
 - `proxy.ts`: `/api/*` passthrough to runtime
-- `ws.ts`: `/events` websocket upgrade and optional runtime websocket piping
-- `events.ts`: monotonic event IDs, event fanout, heartbeat lifecycle
+- `ws.ts`: typed `/events` websocket upgrade and protocol negotiation
+- `events.ts`: monotonic event IDs and state revisions, event fanout, heartbeat lifecycle
 - `errors.ts`: bridge error envelopes and websocket upgrade rejection helpers
 - `prefix.ts`: normalized bridge prefix and rewrite source helpers
 
@@ -60,6 +60,7 @@ Preset API for tool authors to expose one integration entrypoint.
 Typed helper layer for browser/Node clients.
 
 - `client.ts`: health/state/runtime APIs, websocket subscription, typed errors
+- `runtime-store.ts`: shared browser state store with ordered event reconciliation, lifecycle actions, and reconnect/refresh handling
 - `runtime-context.ts`: runtime context registration and auto-mount resolution
 
 ## Request and event flow
@@ -69,14 +70,15 @@ Typed helper layer for browser/Node clients.
 3. Tool UI/CLI calls bridge routes on same origin.
 4. Bridge routes request to runtime-control, proxy, or websocket handling.
 5. Runtime helper starts/stops/checks runtime when required.
-6. Event bus emits runtime updates to websocket clients.
+6. Event bus emits complete `bridge-state` snapshots and `bridge-error` events to websocket clients.
 
 ## Key design decisions
 
 - **Protocol-first boundary**: all adapter integrations converge on one bridge route/event contract.
 - **Same-origin access**: avoids cross-origin complexity for local dev tooling.
 - **Capability-aware control**: runtime control endpoints report/behave based on `command` availability.
-- **Graceful websocket behavior**: bridge event socket stays useful even if runtime websocket proxy path closes.
+- **Typed event channel**: `/events` carries bridge-state snapshots and bridge errors; runtime WebSocket traffic uses a separate channel.
+- **Development client entries**: presets derive a runtime context for each registered browser module and inject a one-time bootstrap through the Vite, Next.js, Nuxt, or Astro adapter. The bootstrap registers contexts before dynamically importing the entries; entries own their UI mounting behavior.
 - **Scoped namespacing for presets**: multiple tool integrations can coexist in one host project.
 
 ## Reliability properties
@@ -84,5 +86,5 @@ Typed helper layer for browser/Node clients.
 - Query-safe route matching.
 - Deterministic bridge error envelope.
 - Binary request + multi-cookie proxy fidelity.
-- Websocket subprotocol validation (`universal.v1+json`).
+- Websocket subprotocol validation (`universal.v2+json`).
 - Next.js standalone singleton keying with optional deterministic override.

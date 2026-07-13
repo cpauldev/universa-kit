@@ -1,4 +1,9 @@
+import {
+  type ResolvedUniversalClientEntry,
+  createUniversalClientEntryVitePlugin,
+} from "../client-entry.js";
 import { isEventsUpgradePath } from "../../bridge/router.js";
+import { fileURLToPath } from "node:url";
 import {
   type BridgeLifecycle,
   type MiddlewareAdapterServer,
@@ -21,6 +26,7 @@ export type UniversalNuxtModule = ((
 
 export function createUniversalNuxtModule(
   options: UniversalNuxtOptions = {},
+  clientEntries: readonly ResolvedUniversalClientEntry[] = [],
 ): UniversalNuxtModule {
   const resolvedOptions = resolveAdapterOptions(options);
   const lifecycle = createBridgeLifecycle(resolvedOptions);
@@ -35,6 +41,10 @@ export function createUniversalNuxtModule(
       await lifecycle.setup(server);
     },
   };
+  const clientEntryPlugin = createUniversalClientEntryVitePlugin(clientEntries);
+  const clientEntryPluginPath = fileURLToPath(
+    new URL("../client-entry/nuxt-plugin.js", import.meta.url),
+  );
 
   const meta = {
     name: resolvedOptions.adapterName,
@@ -60,6 +70,7 @@ export function createUniversalNuxtModule(
     };
     const nuxtOptions = (nuxt.options || {}) as {
       dev?: boolean;
+      plugins?: Array<string | { src: string; mode?: "client" }>;
     };
     if (!nuxtOptions.dev) return;
 
@@ -69,9 +80,29 @@ export function createUniversalNuxtModule(
     ) => void;
 
     hook("vite:extendConfig", ((config: { plugins?: unknown[] }) => {
-      if (hasPluginWithName(config.plugins, bridgePlugin.name)) return;
-      config.plugins = appendPlugin(config.plugins, bridgePlugin);
+      if (!hasPluginWithName(config.plugins, bridgePlugin.name)) {
+        config.plugins = appendPlugin(config.plugins, bridgePlugin);
+      }
+      if (
+        clientEntryPlugin &&
+        !hasPluginWithName(config.plugins, clientEntryPlugin.name)
+      ) {
+        config.plugins = appendPlugin(config.plugins, clientEntryPlugin);
+      }
     }) as (...args: unknown[]) => void);
+
+    if (clientEntryPlugin) {
+      const plugins = (nuxtOptions.plugins ??= []);
+      if (
+        !plugins.some((plugin) =>
+          typeof plugin === "string"
+            ? plugin === clientEntryPluginPath
+            : plugin.src === clientEntryPluginPath,
+        )
+      ) {
+        plugins.push({ src: clientEntryPluginPath, mode: "client" });
+      }
+    }
 
     hook("listen", ((listenerServer: {
       on: (

@@ -1,0 +1,19 @@
+{
+  "name": "example-nuxt",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "preview": "nuxt preview"
+  },
+  "dependencies": {
+    "@example/universal-overlay": "workspace:*",
+    "@example/shared": "workspace:*",
+    "nuxt": "^4.4.8",
+    "vue": "^3.5.39"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}

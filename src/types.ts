@@ -5,7 +5,7 @@ export type UniversalRuntimePhase =
   | "stopping"
   | "error";
 
-export type UniversalProtocolVersion = "1";
+export type UniversalProtocolVersion = "2";
 
 export interface UniversalRuntimeStatus {
   phase: UniversalRuntimePhase;
@@ -55,6 +55,8 @@ export interface UniversalBridgeInstance {
 
 export interface UniversalBridgeState {
   protocolVersion: UniversalProtocolVersion;
+  /** Monotonic revision for ordering complete bridge snapshots across REST and events. */
+  revision: number;
   transportState:
     | "disconnected"
     | "bridge_detecting"
@@ -95,10 +97,10 @@ interface UniversalBridgeEventBase {
 
 export type UniversalBridgeEvent =
   | (UniversalBridgeEventBase & {
-      type: "runtime-status";
-      status: UniversalRuntimeStatus;
+      type: "bridge-state";
+      state: UniversalBridgeState;
     })
   | (UniversalBridgeEventBase & {
-      type: "runtime-error";
+      type: "bridge-error";
       error: string;
     });
